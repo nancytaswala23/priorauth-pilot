@@ -1,0 +1,35 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Written by the PriorAuthPilot team to mirror the structure of a commercial
+payer's clinical policy. It is NOT an Aetna, UnitedHealthcare, or Cigna
+document. Replace with a real policy downloaded from a payer's provider site.
+
+Advanced Imaging: Lumbar Spine MRI (CPT 72148)
+
+Prior Authorization Requirements
+Prior authorization is required for outpatient lumbar spine MRI. The ordering
+provider must submit the request before the service is performed. Requests
+submitted after the service date will be reviewed as retrospective requests
+and may be denied for lack of authorization.
+
+Coverage Criteria
+Lumbar spine MRI is considered medically necessary when one of the following
+is met:
+1. Low back pain with or without radiculopathy persisting after a minimum of
+   6 weeks of provider-directed conservative treatment within the past 6
+   months, including at least one of physical therapy, chiropractic care, or
+   prescribed medication, and the member is a candidate for surgery or
+   interventional treatment.
+2. A red flag condition is present: suspected cauda equina syndrome,
+   progressive neurologic deficit, suspected infection, suspected malignancy,
+   or suspected fracture.
+3. Pre-operative planning for a scheduled lumbar spine surgery.
+
+Exclusions
+Lumbar MRI is not medically necessary for acute low back pain under 6 weeks
+without red flag conditions, for screening, or when the results would not
+change management.
+
+Documentation Requirements
+Submit clinical notes from the last 60 days documenting symptom onset and
+duration, physical and neurologic exam findings, type and dates of
+conservative treatment and the member's response, and any red flag findings.

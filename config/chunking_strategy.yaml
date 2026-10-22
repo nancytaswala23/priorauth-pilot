@@ -1,0 +1,33 @@
+# How policy documents are split into chunks for retrieval.
+# Each policy is split at its own section headings (semantic chunking),
+# not at a fixed character count. A section longer than max_words is
+# split further into overlapping windows so it fits the embedding model.
+
+defaults:
+  max_words: 180      # all-MiniLM-L6-v2 truncates input around 256 tokens
+  overlap_words: 30
+
+policies:
+  - policy_id: medicare_lcd_lumbar_mri
+    file: data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt
+    payer: Medicare
+    document_type: LCD
+    procedure_code: "72148"
+    synthetic: true   # set to false after replacing with a real downloaded LCD
+    sections:
+      - "Coverage Indications, Limitations, and/or Medical Necessity"
+      - "Red Flag Conditions"
+      - "Limitations"
+      - "Documentation Requirements"
+
+  - policy_id: commercial_lumbar_mri
+    file: data/raw/policies/commercial_payer_lumbar_mri_SYNTHETIC.txt
+    payer: SampleCommercial   # rename to the real payer after replacing the file
+    document_type: Commercial clinical policy
+    procedure_code: "72148"
+    synthetic: true
+    sections:
+      - "Prior Authorization Requirements"
+      - "Coverage Criteria"
+      - "Exclusions"
+      - "Documentation Requirements"

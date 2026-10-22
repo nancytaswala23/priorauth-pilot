@@ -1,0 +1,7 @@
+equirements · TXT
+pyyaml
+numpy
+faiss-cpu
+sentence-transformers
+scikit-learn  # only used by the fallback mode if faiss/sentence-transformers are missing
+ 
