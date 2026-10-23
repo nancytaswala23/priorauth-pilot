@@ -1,0 +1,56 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-006: Total Knee Arthroplasty
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members.
+
+Precertification Requirements
+Precertification is required for total knee arthroplasty in any setting.
+Requests should be submitted at least 14 days before the scheduled surgery
+date. The approval also covers the associated inpatient or outpatient stay.
+
+Medical Necessity Criteria
+The plan considers total knee arthroplasty medically necessary when the member
+has advanced joint disease and all of the following apply:
+1. Weight-bearing X-rays show severe joint space narrowing, bone-on-bone
+   contact, or comparable findings of advanced arthritis, avascular necrosis,
+   or post-traumatic arthritis.
+2. Pain and functional limitation interfere with daily activities such as
+   walking, climbing stairs, or work.
+3. At least 3 months of conservative treatment has failed, including
+   medication and physical therapy or a structured exercise program, and
+   weight management counseling when body mass index is 35 or higher.
+4. No active infection is present in the knee or elsewhere in the body.
+
+Not Medically Necessary
+Total knee arthroplasty is not medically necessary when X-rays show only mild
+arthritis, when conservative treatment has not been tried, or when an active
+infection or uncontrolled medical condition makes surgery unsafe.
+
+Experimental, Investigational, or Unproven
+Knee implants without clearance from the U.S. Food and Drug Administration for
+this use are considered experimental and investigational.
+
+Documentation Requirements
+Submit the X-ray report from the last 12 months, pain and function scores,
+conservative treatments with dates and response, body mass index, and for
+members with diabetes a hemoglobin A1c result from the last 3 months.
+
+Background
+Total knee arthroplasty reliably relieves pain from end-stage arthritis.
+Outcomes are better when medical conditions such as diabetes are controlled
+before surgery.
+
+Codes
+Procedure code: 27447 (total knee arthroplasty)
+ICD-10-CM examples: M17.0 bilateral primary osteoarthritis of knee; M17.11
+primary osteoarthritis, right knee; M17.12 primary osteoarthritis, left knee;
+M17.31 post-traumatic osteoarthritis, right knee. Codes are illustrative;
+verify against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.

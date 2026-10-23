@@ -1,0 +1,57 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-004: Brain MRI
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members.
+
+Precertification Requirements
+Precertification is required for outpatient brain MRI with or without
+contrast. Imaging ordered from the emergency department for suspected stroke
+or acute neurologic change does not require precertification.
+
+Medical Necessity Criteria
+The plan considers brain MRI medically necessary when any one of the following
+applies:
+1. Headache with warning features: new headache after age 50, a significant
+   change in an established headache pattern, headache that worsens with
+   coughing or straining, headache in a member with cancer or a weakened
+   immune system, or headache with an abnormal neurologic examination.
+2. New-onset seizure.
+3. New focal neurologic deficits, such as weakness, numbness, or vision loss.
+4. Suspected or established demyelinating disease, including follow-up to
+   guide treatment.
+5. Monitoring of a known brain tumor, or pre-operative planning.
+
+Not Medically Necessary
+Brain MRI is not medically necessary for stable, long-standing migraine or
+tension-type headache with a normal neurologic examination, for simple
+fainting without neurologic signs, or as screening in members without
+symptoms.
+
+Experimental, Investigational, or Unproven
+Functional MRI used to diagnose psychiatric conditions, and brain imaging used
+for lie detection, are considered experimental and investigational.
+
+Documentation Requirements
+Submit headache history including onset, pattern, and any change, the
+neurologic examination, any warning features, a description of seizure events
+if applicable, and reports of prior brain imaging.
+
+Background
+Most primary headaches can be diagnosed from history and examination. Imaging
+is reserved for warning features, because routine imaging finds incidental
+abnormalities more often than causes of headache.
+
+Codes
+Procedure codes: 70551 (brain MRI without contrast); 70553 (brain MRI
+without and with contrast)
+ICD-10-CM examples: R51.9 headache, unspecified; G43.909 migraine,
+unspecified; R56.9 unspecified convulsions. Codes are illustrative; verify
+against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.
