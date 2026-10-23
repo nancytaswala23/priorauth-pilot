@@ -2,18 +2,36 @@
 # Each policy is split at its own section headings (semantic chunking),
 # not at a fixed character count. A section longer than max_words is
 # split further into overlapping windows so it fits the embedding model.
+#
+# sections:       headings to split at AND index for search
+# skip_sections:  headings that end the previous section but are NOT indexed
+#                 (code lists and version history add noise to search)
 
 defaults:
   max_words: 180      # all-MiniLM-L6-v2 truncates input around 256 tokens
   overlap_words: 30
 
+# Shared layout for every Sample Commercial Health Plan policy.
+# Change it here once and every commercial policy follows.
+commercial_layout: &commercial_sections
+  - "Precertification Requirements"
+  - "Medical Necessity Criteria"
+  - "Not Medically Necessary"
+  - "Experimental, Investigational, or Unproven"
+  - "Documentation Requirements"
+  - "Background"
+commercial_skip: &commercial_skip
+  - "Codes"
+  - "Policy History"
+
 policies:
+  # ---------------- Medicare (LCD-style layout) ----------------
   - policy_id: medicare_lcd_lumbar_mri
     file: data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt
     payer: Medicare
     jurisdiction: JK  # example region; each MAC jurisdiction can have its own LCD
     document_type: LCD
-    procedure_code: "72148"
+    procedure_codes: ["72148"]
     synthetic: true   # set to false after replacing with a real downloaded LCD
     sections:
       - "Coverage Indications, Limitations, and/or Medical Necessity"
@@ -21,15 +39,73 @@ policies:
       - "Limitations"
       - "Documentation Requirements"
 
+  # ------- Sample Commercial Health Plan (fictional payer, CPB-style layout) -------
   - policy_id: commercial_lumbar_mri
     file: data/raw/policies/commercial_payer_lumbar_mri_SYNTHETIC.txt
-    payer: SampleCommercial   # rename to the real payer after replacing the file
-    jurisdiction: national    # commercial policies usually apply everywhere
-    document_type: Commercial clinical policy
-    procedure_code: "72148"
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["72148"]
     synthetic: true
-    sections:
-      - "Prior Authorization Requirements"
-      - "Coverage Criteria"
-      - "Exclusions"
-      - "Documentation Requirements"
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
+
+  - policy_id: commercial_cervical_mri
+    file: data/raw/policies/commercial_cervical_mri_SYNTHETIC.txt
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["72141"]
+    synthetic: true
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
+
+  - policy_id: commercial_knee_mri
+    file: data/raw/policies/commercial_knee_mri_SYNTHETIC.txt
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["73721"]
+    synthetic: true
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
+
+  - policy_id: commercial_brain_mri
+    file: data/raw/policies/commercial_brain_mri_SYNTHETIC.txt
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["70551", "70553"]
+    synthetic: true
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
+
+  - policy_id: commercial_lumbar_esi
+    file: data/raw/policies/commercial_lumbar_esi_SYNTHETIC.txt
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["62323", "64483"]
+    synthetic: true
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
+
+  - policy_id: commercial_total_knee_arthroplasty
+    file: data/raw/policies/commercial_total_knee_arthroplasty_SYNTHETIC.txt
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["27447"]
+    synthetic: true
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
+
+  - policy_id: commercial_sleep_apnea
+    file: data/raw/policies/commercial_sleep_apnea_SYNTHETIC.txt
+    payer: SampleCommercial
+    jurisdiction: national
+    document_type: Commercial clinical policy bulletin
+    procedure_codes: ["95806", "G0399", "95810", "95811", "E0601"]
+    synthetic: true
+    sections: *commercial_sections
+    skip_sections: *commercial_skip
