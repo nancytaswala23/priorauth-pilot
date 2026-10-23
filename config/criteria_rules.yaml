@@ -1,0 +1,63 @@
+# Deterministic criteria rules, evaluated against a case + its retrieved
+# policy during Step 3 (Evaluate Criteria) of the agent loop.
+# See docs/mcp_design.md for where this fits in the overall flow.
+#
+# "source" names which table / data source the check reads from (Nancy's
+# Snowflake tables). "cites_chunk" names the exact policy chunk_id (from
+# Yashasvi's src/rag/rag_pipeline.py) that justifies this rule -- her own
+# chunk_id format (policy_id::section_slug) is built specifically so rules
+# here can cite it directly, rather than a loose section-name string. Note:
+# section headings differ per payer (see config/chunking_strategy.yaml) --
+# there is no universal shared heading set, which is exactly why citing the
+# full chunk_id matters more than citing a bare section name.
+#
+# IMPORTANT: cites_chunk below is specific to Medicare's lumbar_mri LCD
+# (medicare_lcd_lumbar_mri). A SampleCommercial case must NOT use these
+# chunk ids -- it has entirely different section headings (see
+# config/chunking_strategy.yaml). This is a known gap, not yet solved:
+# these rules need a per-payer variant, or cites_chunk needs to be resolved
+# dynamically based on which policy was actually retrieved.
+#
+# "source" names which table / data source the check reads from.
+# "severity" controls how a failed rule affects the decision step:
+#   critical -> blocks approval outright (routes to NEEDS_DOCS or DENIED)
+#   high     -> lowers confidence / may still trigger a documentation request
+
+procedures:
+  lumbar_mri:
+    rules:
+      - rule: "conservative_treatment_weeks >= 6"
+        source: "CLAIMS"
+        cites_chunk: "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"
+        cites_chunk_confirmed_by: "Yashasvi's eval set (EVAL_SET), exact match"
+        severity: "critical"
+        description: "Patient must have at least 6 weeks of documented conservative treatment"
+
+      - rule: "'M54.16' in diagnosis_codes"
+        source: "CLAIMS"
+        cites_chunk: "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"
+        cites_chunk_confirmed_by: >
+          Confirmed by reading the real policy text directly
+          (data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt).
+          REPLACES the old "imaging_finding in ['disc_herniation', 'stenosis']"
+          rule, which matched nothing in the real policy -- "disc herniation"
+          and "stenosis" appear nowhere in any of its 4 sections. The real
+          medical-necessity sentence requires radiculopathy (pain, numbness,
+          or weakness radiating into the leg), ICD-10-CM M54.16, as a
+          separate, equally-required condition alongside the 6-week
+          conservative-treatment rule above -- not an imaging finding at all.
+          Also fixes "source: OBSERVATIONS", which pointed at a table that
+          does not exist in Nancy's schema (PATIENTS/CLAIMS/POLICIES only);
+          diagnosis_code is a real CLAIMS column.
+        severity: "critical"  # part of the same compound AND condition as the 6-week rule -- judgment call, confirm with team
+        description: "Patient must have a documented lumbar radiculopathy diagnosis (M54.16) per the policy's core medical necessity criterion"
+
+      - rule: "patient_age >= 18"
+        source: "PATIENTS"
+        cites_chunk: null
+        cites_chunk_confirmed_by: "No matching section found in Medicare's 4 real headings -- likely a general eligibility rule, not grounded in policy text"
+        severity: "high"
+        description: "Patient must be 18 or older"
+
+    decision_logic: "ALL_RULES_MUST_PASS"
+    approval_threshold: 0.95
