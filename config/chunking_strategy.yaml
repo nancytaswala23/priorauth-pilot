@@ -11,6 +11,7 @@ policies:
   - policy_id: medicare_lcd_lumbar_mri
     file: data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt
     payer: Medicare
+    jurisdiction: JK  # example region; each MAC jurisdiction can have its own LCD
     document_type: LCD
     procedure_code: "72148"
     synthetic: true   # set to false after replacing with a real downloaded LCD
@@ -23,6 +24,7 @@ policies:
   - policy_id: commercial_lumbar_mri
     file: data/raw/policies/commercial_payer_lumbar_mri_SYNTHETIC.txt
     payer: SampleCommercial   # rename to the real payer after replacing the file
+    jurisdiction: national    # commercial policies usually apply everywhere
     document_type: Commercial clinical policy
     procedure_code: "72148"
     synthetic: true

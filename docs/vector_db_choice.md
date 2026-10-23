@@ -53,3 +53,16 @@ python src/rag/rag_pipeline.py query "what documents are required" --payer Medic
 ```
 
 If `faiss` or `sentence-transformers` isn't installed, the script falls back to TF-IDF keyword search and prints a notice. This keeps it runnable anywhere, but it is not the intended pipeline.
+   ## Evaluation results
+
+   16 questions: 8 "easy" (reuse policy wording), 8 "hard" (reworded like a clinician would ask).
+
+   | Method | Section names | Easy @1 | Easy @3 | Hard @1 | Hard @3 |
+   |---|---|---|---|---|---|
+   | Keyword (TF-IDF) | yes / no | 7/8 | 8/8 | 2/8 | 6/8 |
+   | Embeddings (FAISS) | yes / no | 7/8 | 8/8 | 5/8 | 8/8 |
+
+   - Easy questions can't tell the methods apart; reworded questions can.
+   - Adding section names to chunks had no measurable effect.
+   - All remaining embedding misses still appear in the top 3, so the agent should read the top 3 results.
+   - Caveat: small test set, written by the pipeline's author. Next step is questions written blind by teammates.
