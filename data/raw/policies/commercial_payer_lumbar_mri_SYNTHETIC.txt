@@ -1,0 +1,62 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-001: Lumbar Spine MRI
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members. Does not apply to
+Medicare Advantage or Medicaid plans.
+
+Precertification Requirements
+Precertification is required for outpatient lumbar spine MRI. The ordering
+provider must submit the request before the service is performed. Requests
+submitted after the service date are reviewed as retrospective requests and
+may be denied for lack of authorization. Imaging performed in the emergency
+department or during an inpatient stay does not require separate
+precertification.
+
+Medical Necessity Criteria
+The plan considers lumbar spine MRI medically necessary when any one of the
+following applies:
+1. Low back pain with or without radiculopathy that persists after at least
+   6 weeks of provider-directed conservative treatment within the past 6
+   months (physical therapy, chiropractic care, or prescribed medication), and
+   the member is a candidate for surgery or interventional treatment.
+2. A red flag condition is present: suspected cauda equina syndrome,
+   progressive neurologic deficit, suspected infection, suspected malignancy,
+   or suspected fracture.
+3. Pre-operative planning for a scheduled lumbar spine surgery.
+
+Not Medically Necessary
+The plan considers lumbar spine MRI not medically necessary for acute low back
+pain present for less than 6 weeks without red flag conditions, for screening
+in members without symptoms, or when the results would not change management.
+Repeat MRI within 12 months is not medically necessary unless symptoms or
+neurologic findings have changed.
+
+Experimental, Investigational, or Unproven
+Upright or positional (weight-bearing) MRI of the lumbar spine is considered
+experimental and investigational because its added clinical value over
+standard MRI has not been established.
+
+Documentation Requirements
+Submit clinical notes from the last 60 days documenting symptom onset and
+duration, physical and neurologic exam findings, type and dates of
+conservative treatment and the member's response, and any red flag findings.
+
+Background
+Most episodes of acute low back pain improve within several weeks without
+imaging. Early imaging in uncomplicated cases often shows age-related findings
+that do not explain symptoms and can lead to unnecessary procedures.
+
+Codes
+Procedure code: 72148 (lumbar spine MRI without contrast)
+ICD-10-CM examples: M54.50 low back pain; M54.16 lumbar radiculopathy;
+M54.17 lumbosacral radiculopathy; M51.16 lumbar disc disorder with
+radiculopathy; M48.061 lumbar spinal stenosis; G83.4 cauda equina syndrome.
+Codes are illustrative; verify against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.

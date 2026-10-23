@@ -1,0 +1,57 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-002: Cervical Spine MRI
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members.
+
+Precertification Requirements
+Precertification is required for outpatient cervical spine MRI. Submit the
+request before scheduling. Urgent requests for suspected spinal cord
+compression may be submitted by phone and are reviewed within 72 hours.
+
+Medical Necessity Criteria
+The plan considers cervical spine MRI medically necessary when any one of the
+following applies:
+1. Neck pain with radiculopathy (pain, numbness, or weakness extending into
+   the arm) that persists after at least 6 weeks of conservative treatment,
+   and the member is a candidate for surgery or injection.
+2. Signs of cervical myelopathy, such as an unsteady gait, loss of hand
+   dexterity, or abnormal reflexes. Imaging may proceed without a trial of
+   conservative treatment.
+3. Suspected infection, malignancy, or inflammatory disease of the spine.
+4. Trauma with neurologic findings, or with a fracture concern that plain
+   films or CT could not resolve.
+5. Pre-operative planning for scheduled cervical spine surgery.
+
+Not Medically Necessary
+Cervical spine MRI is not medically necessary for neck pain present for less
+than 6 weeks without neurologic findings or red flags, including uncomplicated
+whiplash injuries. Repeat imaging within 12 months is not medically necessary
+without a change in symptoms or examination.
+
+Experimental, Investigational, or Unproven
+Diffusion tensor imaging of the cervical spinal cord and upright cervical MRI
+are considered experimental and investigational outside of research settings.
+
+Documentation Requirements
+Submit the neurologic examination, symptom duration, any myelopathy findings,
+dates and results of conservative treatment, and reports of prior spine
+imaging.
+
+Background
+Neck pain is common and usually resolves with time and activity modification.
+Myelopathy is an exception, because delayed diagnosis of spinal cord
+compression can lead to permanent deficits.
+
+Codes
+Procedure code: 72141 (cervical spine MRI without contrast)
+ICD-10-CM examples: M54.2 cervicalgia; M54.12 cervical radiculopathy;
+M50.10 cervical disc disorder with radiculopathy; M47.12 cervical spondylosis
+with myelopathy. Codes are illustrative; verify against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.
