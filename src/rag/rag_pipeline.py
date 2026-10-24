@@ -24,8 +24,16 @@ Options for every command:
   --no-section-names           embed chunks WITHOUT the section heading prefix (experiment)
   --rerank                     re-score the top 10 candidates with a cross-encoder model
 
-Note: the first run downloads the embedding model (~90 MB), so run it once
-with internet before presenting.
+Using it from Python (e.g. from the agent):
+  from rag_pipeline import get_retriever
+  r = get_retriever()   # same defaults as the CLI: embeddings + section names + rerank
+  results = r.search("documentation needed", payer="Medicare",
+                     procedure_code="72148", jurisdiction="JK", k=3)
+  # each result: chunk_id, payer, jurisdiction, section, text, score, ...
+  # an empty list means no policy matched the filters -> route to a human
+
+Note: the first run downloads the embedding and reranker models (~180 MB),
+so run it once with internet before presenting.
 """
 
 import argparse
@@ -203,6 +211,20 @@ def encode(texts):
     return np.asarray(vecs, dtype="float32")
 
 
+def resolve_rerank(use_rerank="auto", quiet=False):
+    """'auto' (the default everywhere) = rerank whenever sentence-transformers is
+    installed, so the CLI and Python callers get the same behaviour."""
+    if use_rerank == "auto":
+        if faiss_available():
+            return True
+        if not quiet:
+            print("NOTE: sentence-transformers not installed, so reranking is off.")
+        return False
+    if use_rerank and not faiss_available():
+        sys.exit("ERROR: reranking needs sentence-transformers: python -m pip install -r requirements.txt")
+    return bool(use_rerank)
+
+
 _reranker = None
 
 
@@ -224,11 +246,11 @@ def rerank(query, candidates, use_section_names=True):
 class Retriever:
     """Holds the chunks plus either a FAISS index (embeddings) or a TF-IDF matrix (keywords)."""
 
-    def __init__(self, chunks, backend, use_section_names=True):
+    def __init__(self, chunks, backend, use_section_names=True, use_rerank="auto"):
         self.chunks = chunks
         self.backend = backend
         self.use_section_names = use_section_names
-        self.rerank = False
+        self.rerank = resolve_rerank(use_rerank, quiet=True)
         texts = [embed_text(c, use_section_names) for c in chunks]
         if backend in ("faiss", "hybrid"):
             import faiss
@@ -296,17 +318,17 @@ class Retriever:
         return results
 
 
-def get_retriever(backend="auto", use_section_names=True, quiet=False, use_rerank=False):
+def get_retriever(backend="auto", use_section_names=True, quiet=False, use_rerank="auto"):
+    """Main entry point for other code. Defaults match the CLI:
+    embeddings (FAISS) + section names + reranking."""
     chunks = build_chunks(load_config(), warn=not quiet)
     backend = resolve_backend(backend, quiet=quiet)
-    if use_rerank and not faiss_available():
-        sys.exit("ERROR: --rerank needs sentence-transformers: python -m pip install -r requirements.txt")
     r = None
     if backend == "faiss":
         r = Retriever.load_saved(chunks, use_section_names)
     if r is None:
-        r = Retriever(chunks, backend, use_section_names)
-    r.rerank = use_rerank
+        r = Retriever(chunks, backend, use_section_names, use_rerank=False)
+    r.rerank = resolve_rerank(use_rerank, quiet=quiet)
     return r
 
 
@@ -514,8 +536,8 @@ def main():
                         help="faiss = embeddings, tfidf = keyword search, hybrid = both (default: auto)")
     common.add_argument("--no-section-names", action="store_true",
                         help="embed chunks without the section heading prefix")
-    common.add_argument("--rerank", action=argparse.BooleanOptionalAction, default=True,
-                        help="re-score the top 10 candidates with a cross-encoder")
+    common.add_argument("--rerank", action=argparse.BooleanOptionalAction, default="auto",
+                        help="re-score the top 10 candidates with a cross-encoder (default: on; --no-rerank to disable)")
 
     parser = argparse.ArgumentParser(description="PriorAuthPilot policy RAG pipeline")
     sub = parser.add_subparsers(dest="command", required=True)
