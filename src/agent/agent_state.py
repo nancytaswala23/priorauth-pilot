@@ -78,10 +78,18 @@ class AgentState:
     criteria_met: Optional[bool] = None
 
     # --- Set after the decide step (Step 4) ---
-    decision: Optional[str] = None  # "APPROVED" | "NEEDS_DOCS" | "DENIED"
+    # This is the AGENT's own assessment, not an adjudication -- the agent
+    # cannot approve or deny a claim; only the insurer (Server 3) can.
+    # MEETS_CRITERIA  -> safe to submit
+    # NEEDS_DOCS      -> missing documentation before it can be submitted
+    # DOES_NOT_MEET_CRITERIA -> likely to be denied if submitted as-is;
+    #                           still routed to a human / submitted for the
+    #                           insurer to actually decide, not auto-rejected
+    decision: Optional[str] = None  # "MEETS_CRITERIA" | "NEEDS_DOCS" | "DOES_NOT_MEET_CRITERIA"
 
-    # --- Set only if decision == "DENIED" (Step 7), from MCP Server #3: Submission & Tracking ---
-    denial_reason_code: Optional[str] = None  # X12 CARC code, e.g. "16"
+    # --- Set only after Server 3 (the simulated insurer) actually returns a
+    # denial in response to a real or simulated submission (Step 7) ---
+    denial_reason_code: Optional[str] = None  # X12 CARC code, e.g. "16" -- from the INSURER, not the agent
     appeal_draft: Optional[str] = None  # the drafted appeal text, grounded in denial_reason_code + applicable_policy
 
     # --- Optional: how confident the evaluation was, not just pass/fail ---
