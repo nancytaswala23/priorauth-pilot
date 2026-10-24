@@ -12,7 +12,7 @@ Given a question such as "How many weeks of conservative treatment does Medicare
 |------|--------|
 | Chunking by section headings | Working |
 | Embedding with all-MiniLM-L6-v2 + FAISS index | Implemented |
-| Payer / procedure filtering | Working |
+| Payer / proced`` ure filtering | Working |
 | Retrieval evaluation (Hit@1, Hit@3) | Working, small test set |
 | Policy documents | **Synthetic samples**, to be replaced with a real Medicare LCD and a real commercial payer policy |
 
