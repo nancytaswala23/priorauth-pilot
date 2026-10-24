@@ -253,55 +253,6 @@ Stores insurance coverage policies and requirements.
 
 ---
 
-## RAG (Retrieval-Augmented Generation) System
-
-### Why RAG Instead of Pure LLM?
-
-- ❌ **Pure LLM:** Hallucinates policy details ("I think coverage requires 6 weeks...")
-- ✅ **RAG:** Retrieves actual policy language ("Policy states: coverage requires 6 weeks...")
-
-### Chunking Strategy
-
-Instead of arbitrary 500-character chunks, we chunk by **semantic sections**:
-- Indications & Limitations
-- Documentation Required
-- Coverage Criteria
-- Prior Auth Requirements
-
-### Vector Database Choice
-
-- **FAISS:** Simple, fast, free (open source)
-- **all-MiniLM-L6-v2:** 384-dimensional embeddings (sufficient for medical text)
-- **Workflow:** Extract → Chunk → Embed → Store → Query → Retrieve
-
----
-
-## Deterministic Rules
-
-### Why not pure AI?
-
-- Healthcare requires **explainability** - doctors need to see WHY a case was denied
-- AI blackboxes are unacceptable in regulated industries
-- Deterministic rules are **auditable and testable**
-
-Each rule cites the exact policy `chunk_id` (from Yashasvi's RAG pipeline) that justifies it — not just a general section name. This means every decision traces back to one specific sentence in one specific policy document, and that citation can be (and has been) verified by actually running the retrieval pipeline, not just asserted.
-
-3 rules currently defined for Lumbar MRI — conservative treatment duration, radiculopathy diagnosis, and patient age. Example:
-
-```yaml
-- rule: "conservative_treatment_weeks >= 6"
-  source: "CLAIMS"
-  cites_chunk: "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"
-  severity: "critical"
-  description: "Patient must have at least 6 weeks of documented conservative treatment"
-```
-
-**Decision:** ALL rules must pass for approval (`decision_logic: ALL_RULES_MUST_PASS`, `approval_threshold: 0.95`).
-
-**Verified, not assumed:** `test_integration.py` makes a real call into Yashasvi's `rag_pipeline.py` and confirms the chunk it retrieves for this rule's question is the exact `chunk_id` cited above.
-
----
-
 ## Current Project Status
 
 ### ✅ Completed
@@ -341,25 +292,6 @@ Each rule cites the exact policy `chunk_id` (from Yashasvi's RAG pipeline) that 
 
 ---
 
-## Key Metrics
-
-- **Current Prior Auth Cycle Time:** 11-16 minutes
-- **Target Cycle Time:** < 5 minutes (60% improvement)
-- **Accuracy Target:** > 95% on clear cases
-- **Audit Trail:** 100% - every decision logged with reasoning
-
----
-
-## Compliance & Standards
-
-- ✅ **FHIR Compliant:** Uses HL7 FHIR standard for patient data
-- ✅ **X12 Standards:** Uses industry-standard CARC/RARC denial codes
-- ✅ **CMS Ready:** Aligns with CMS-0057-F (PA API requirements by Jan 2027)
-- ✅ **Open Source:** Uses only open-source technologies (Snowflake, dbt, FAISS, LangGraph)
-- ✅ **Auditable:** Deterministic rules are traceable and explainable
-
----
-
 ## References
 
 - [Medicare Coverage Database](https://www.cms.gov/medicare-coverage-database)
@@ -369,11 +301,3 @@ Each rule cites the exact policy `chunk_id` (from Yashasvi's RAG pipeline) that 
 - [FAISS Documentation](https://github.com/facebookresearch/faiss)
 - [LangGraph](https://github.com/langchain-ai/langgraph)
 
----
-
-## Contact & Questions
-
-For questions about the project architecture, implementation details, or demonstration:
-- Nancy (Data Engineering)
-- Yashasvi (RAG & Policies)
-- Rekha (Agent & Orchestration)
