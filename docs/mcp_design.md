@@ -74,9 +74,12 @@ directly instead of bundling everything behind one API.
   implements the actual Da Vinci PAS standard CMS-0057-F mandates, and this
   simulated server is designed to mirror that same request/response shape
   as a possible stretch goal.
-- **What it does:** accepts a decision (`APPROVED` / `NEEDS_DOCS` /
-  `DENIED`), logs and tracks it, and on denial returns the specific X12
-  CARC/RARC reason code.
+- **What it does:** accepts the agent's assessment and routing choice
+  (submit / request docs / escalate for review), logs and tracks the
+  resulting submission, and — because only the insurer can actually approve
+  or deny a claim, not the agent — returns the real outcome once the
+  (simulated) insurer responds, including the specific X12 CARC/RARC reason
+  code if denied.
 - **Endpoints:**
   - `submit_approval(request_id)` → logs an approval
   - `submit_denial(request_id, reason_code)` → logs a denial with its X12 CARC/RARC code
@@ -93,7 +96,7 @@ directly instead of bundling everything behind one API.
 | 1. Ingest Case | Pull patient + claim history | Server 1 |
 | 2. Retrieve Policy | Pull national, then regional (or payer-specific) policy | Server 2 |
 | 3. Evaluate Criteria | Check `AgentState` against `config/criteria_rules.yaml`, tracing each rule back to its `source` table and its `cites_chunk` id | — (local logic) |
-| 4. Decide & Route | Submit / request docs / escalate | — (local logic) |
+| 4. Decide & Route | Agent assesses: MEETS_CRITERIA / NEEDS_DOCS / DOES_NOT_MEET_CRITERIA -- then routes to submit, request docs, or escalate (the agent never itself approves or denies) | — (local logic) |
 | 5. Act | Submit the decision | Server 3 |
 | 6. Track Status | Poll for an outcome | Server 3 |
 | 7. On Denial | Read reason code, re-retrieve policy language, draft appeal | Server 3 → Server 2 |

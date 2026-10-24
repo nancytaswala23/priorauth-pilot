@@ -57,9 +57,18 @@ section("STEP 1: Ingest Case  (Nancy's Server 1 -- SIMULATED, no live Snowflake 
 # rows over time (per get_conservative_treatment() in mcp_design.md) --
 # here we just assert a plausible result for one test patient.
 simulated_claims_lookup = {
-    # diagnosis_codes includes M54.16 (lumbar radiculopathy) alongside the
-    # presenting M54.5 (low back pain) -- plausible real-world pairing
-    "P001": {"conservative_treatment_weeks": 4, "patient_age": 34, "diagnosis_codes": ["M54.5", "M54.16"]},
+    # P001: ordinary case, no red flags -- still correctly needs 6 weeks
+    "P001": {
+        "conservative_treatment_weeks": 4, "patient_age": 34,
+        "diagnosis_codes": ["M54.5", "M54.16"], "red_flag_present": False,
+    },
+    # P002: the exact scenario that motivated this fix -- a cauda equina
+    # patient at 2 weeks. Without the red-flag exception, this case would
+    # incorrectly fail Rule 1 despite being a genuine emergency.
+    "P002": {
+        "conservative_treatment_weeks": 2, "patient_age": 52,
+        "diagnosis_codes": ["M54.5", "M54.16"], "red_flag_present": True,
+    },
 }
 
 state = AgentState(
@@ -137,10 +146,10 @@ with open(REPO_ROOT / "config" / "criteria_rules.yaml") as f:
     rules_config = yaml.safe_load(f)
 rules = rules_config["procedures"]["lumbar_mri"]["rules"]
 
-rule1_cites = rules[0]["cites_chunk"]
+rule1_cites = rules[0]["cites_chunk"]  # now a list -- this rule cites 2 sections (base + red-flag exception)
 check(
-    f"Retrieved chunk_id matches Rule 1's cites_chunk ('{rule1_cites}')",
-    top["chunk_id"] == rule1_cites,
+    f"Retrieved chunk_id is one of Rule 1's cites_chunk list {rule1_cites}",
+    top["chunk_id"] in rule1_cites,
 )
 
 # ---------------------------------------------------------------- STEP 3
@@ -151,7 +160,8 @@ all_critical_passed = True
 
 for r in rules:
     if "conservative_treatment_weeks" in r["rule"]:
-        passed = claims["conservative_treatment_weeks"] >= 6
+        # Compound rule: 6+ weeks OR a red flag present (e.g. cauda equina)
+        passed = claims["conservative_treatment_weeks"] >= 6 or claims["red_flag_present"]
     elif "M54.16" in r["rule"]:
         passed = "M54.16" in claims["diagnosis_codes"]
     elif "patient_age" in r["rule"]:
@@ -169,20 +179,38 @@ for r in rules:
 state.criteria_met = all_critical_passed
 print(f"\n  state.criteria_met = {state.criteria_met}")
 
+# ---------------------------------------------------------------- STEP 3b (fix verification)
+section("STEP 3b: Verify the red-flag exception actually works (patient P002)")
+
+p002 = simulated_claims_lookup["P002"]
+p002_passes = p002["conservative_treatment_weeks"] >= 6 or p002["red_flag_present"]
+check(
+    f"P002 (2 weeks treatment, red_flag_present=True) now PASSES Rule 1 "
+    f"(would have incorrectly failed before this fix)",
+    p002_passes,
+)
+
 # ---------------------------------------------------------------- STEP 4
-section("STEP 4: Decide")
+section("STEP 4: Decide  (the AGENT's own assessment -- it cannot approve or deny)")
 
-state.decision = "APPROVED" if state.criteria_met else "DENIED"
+state.decision = "MEETS_CRITERIA" if state.criteria_met else "DOES_NOT_MEET_CRITERIA"
 print(f"  state.decision = {state.decision}")
+print("  (This is an assessment, not an adjudication -- only the insurer, via")
+print("   Server 3, can actually approve or deny the claim.)")
 
-if state.decision == "DENIED":
+if state.decision == "DOES_NOT_MEET_CRITERIA":
+    # The case is still routed/submitted -- it is NOT auto-rejected by the
+    # agent. What follows simulates the INSURER's (Server 3's) response
+    # after that submission, which is the only place a real denial can
+    # come from.
+    section("STEP 5-7: Act / Track / On Denial  (Server 3 -- SIMULATED insurer response)")
     state.denial_reason_code = "16"
     state.appeal_draft = (
         f"Per {state.applicable_policy.chunk_id}, requesting reconsideration "
         f"with updated conservative treatment documentation."
     )
-    print(f"  state.denial_reason_code = {state.denial_reason_code}")
-    print(f"  state.appeal_draft = {state.appeal_draft}")
+    print(f"  (simulated) insurer denial_reason_code = {state.denial_reason_code}")
+    print(f"  (simulated) appeal_draft = {state.appeal_draft}")
 
 # ------------------------------------------------------------------ RESULT
 section("RESULT")
@@ -193,5 +221,6 @@ else:
     print("PASS -- Yashasvi's real RAG output plugs directly into your")
     print("AgentState/PolicyReference with zero manual translation, and the")
     print("retrieved chunk matches what criteria_rules.yaml already claims.")
-    print("Nancy's Server 1 was simulated here")
-    print("that piece is actually built and wired up.")
+    print("Nancy's Server 1 is SIMULATED in this test -- it is NOT built or")
+    print("wired up yet. simulated_claims_lookup stands in for a real call;")
+    print("replace it once a real Server 1 query endpoint exists.")

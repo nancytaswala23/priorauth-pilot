@@ -26,12 +26,32 @@
 procedures:
   lumbar_mri:
     rules:
-      - rule: "conservative_treatment_weeks >= 6"
+      - rule: "conservative_treatment_weeks >= 6 or red_flag_present"
         source: "CLAIMS"
-        cites_chunk: "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"
-        cites_chunk_confirmed_by: "Yashasvi's eval set (EVAL_SET), exact match"
+        cites_chunk:
+          - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base 6-week requirement
+          - "medicare_lcd_lumbar_mri::red_flag_conditions"  # exception: skip the wait if a red flag is present
+        cites_chunk_confirmed_by: >
+          Base clause confirmed via Yashasvi's eval set (exact match).
+          Exception clause confirmed by reading the real policy text directly
+          (data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt) -- the
+          Red Flag Conditions section explicitly allows imaging without
+          completing 6 weeks of conservative treatment when cauda equina
+          syndrome, progressive/severe neurologic deficit, spinal infection,
+          malignancy, or a post-trauma fracture is suspected. Without this
+          exception, a cauda equina patient at 2 weeks would incorrectly
+          fail this rule.
         severity: "critical"
-        description: "Patient must have at least 6 weeks of documented conservative treatment"
+        description: >
+          Patient must have at least 6 weeks of documented conservative
+          treatment, UNLESS a red-flag condition (e.g. new bladder/bowel
+          dysfunction, saddle numbness, suspected infection, malignancy, or
+          fracture) is present, which allows immediate imaging
+        # NOTE: red_flag_present is a derived/computed boolean, same as
+        # conservative_treatment_weeks -- it isn't a raw CLAIMS column. It
+        # would need to be computed from diagnosis/observation codes
+        # matching the conditions above. The evaluator that does this
+        # computation doesn't exist yet.
 
       - rule: "'M54.16' in diagnosis_codes"
         source: "CLAIMS"
