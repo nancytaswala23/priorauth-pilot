@@ -1,0 +1,34 @@
+PRIORAUTH PILOT - DATA STRUCTURE
+===============================================================
+
+PATIENTS TABLE (Dimension)
+Columns:
+  patient_id       VARCHAR(20)    Primary Key - P1000, P1001, etc
+  age              INT            18-85
+  gender           VARCHAR(1)     M or F
+  state            VARCHAR(2)     CA, NY, TX, etc
+  insurance        VARCHAR(50)    Aetna, Medicare, etc
+  created_at       TIMESTAMP      Record creation time
+
+CLAIMS TABLE (Fact)
+Columns:
+  claim_id         VARCHAR(20)    Primary Key - C10000, C10001, etc
+  patient_id       VARCHAR(20)    Foreign Key → PATIENTS
+  procedure_code   VARCHAR(10)    HCPCS code - 72148 (MRI)
+  diagnosis_code   VARCHAR(10)    ICD-10 code - M51.26
+  date_of_service  DATE           Service date
+  created_at       TIMESTAMP      Claim received date
+
+PROCEDURES TABLE (Dimension)
+Columns:
+  procedure_code        VARCHAR(10)    Primary Key
+  procedure_name        VARCHAR(100)   Full name
+  cost                  DECIMAL(10,2)  Cost
+  requires_prior_auth   VARCHAR(3)     Yes/No
+
+POLICIES TABLE (Dimension)
+Columns:
+  policy_id         VARCHAR(20)    Primary Key
+  payer_name        VARCHAR(50)    Aetna, Medicare, etc
+  procedure_code    VARCHAR(10)    HCPCS code
+  coverage_text     TEXT           Full policy text
