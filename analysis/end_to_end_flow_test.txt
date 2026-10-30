@@ -1,0 +1,152 @@
+===============================================================
+END-TO-END 7-STEP FLOW TEST -- John (P1000)
+===============================================================
+
+Purpose: demonstrate PriorAuthPilot's full 7-step agentic loop running
+against REAL components -- a real retrieval from Yashasvi's
+src/rag/rag_pipeline.py, and the real src/agent config/criteria_rules.yaml
+-- not a hand-written or assumed trace. Full output captured below is from
+an actual run (john_end_to_end_test.py), on 2026-10-29.
+
+A NOTE ON JOHN'S PAYER (read this first):
+The original workplans describe John as an "Aetna" patient. Checked
+against the real data and this is not possible as written: no payer named
+"Aetna" exists anywhere in the real system -- the real synthetic
+commercial payer is named "SampleCommercial" (see
+config/chunking_strategy.yaml). John is resolved to a MEDICARE patient
+instead for this test, because his exact clinical numbers (M54.16
+diagnosis, conservative treatment weeks, the red-flag exception, age)
+already match the real, previously-verified Medicare policy text word for
+word -- this required zero new assumptions. If the team later decides John
+should be a SampleCommercial patient instead, this test needs to be rebuilt
+against that policy's real text, which has not yet been read in detail.
+
+
+===============================================================
+JOHN'S CASE
+===============================================================
+Patient ID:         P1000
+Procedure:          72148 (Lumbar MRI)
+Diagnosis code:      M54.16 (Radiculopathy, lumbar region)
+Payer:               Medicare
+Jurisdiction:        JK
+Conservative treatment so far: 2 weeks
+Red flag present:    No
+Patient age:         55
+
+
+===============================================================
+STEP 1: INGEST CASE
+(Nancy's Server 1 -- SIMULATED, no live Snowflake connection exists yet)
+===============================================================
+Simulated claims data stands in for a real Server 1 query:
+  conservative_treatment_weeks: 2
+  red_flag_present: False
+  patient_age: 55
+
+This step is NOT live. It will need to be replaced with a real query once
+Server 1 (Nancy's layer) is actually built and connected.
+
+
+===============================================================
+STEP 2: RETRIEVE POLICY
+(REAL call into Yashasvi's src/rag/rag_pipeline.py)
+===============================================================
+Query sent:   "How many weeks of conservative treatment are needed before
+               a lumbar MRI?"
+Filters:      payer=Medicare, procedure_code=72148, jurisdiction=JK
+
+Real result returned:
+  chunk_id: medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+  score: 6.1589
+  source_level (derived from document_type=LCD): REGIONAL
+
+This is a real, live retrieval -- the chunk_id, the score, and the section
+text all came from Yashasvi's actual FAISS index, not from an assumption
+about what should be retrieved. A PolicyReference object was built
+directly from this real result with zero manual field translation.
+
+
+===============================================================
+STEP 3: EVALUATE CRITERIA
+(real config/criteria_rules.yaml x John's simulated claims data)
+===============================================================
+Rule 1 -- conservative_treatment_weeks >= 6 or red_flag_present
+  John: 2 weeks, no red flag  ->  NOT MET
+  Cites: medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+         medicare_lcd_lumbar_mri::red_flag_conditions
+  Severity: critical
+
+Rule 2 -- 'M54.16' in diagnosis_codes
+  John: diagnosis_codes = ['M54.16']  ->  MET
+  Cites: medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+  Severity: critical
+
+Rule 3 -- patient_age >= 18
+  John: age 55  ->  MET
+  Cites: (none -- general eligibility, not grounded in specific policy text)
+  Severity: high
+
+Result: state.criteria_met = False
+(Rule 1, a critical rule, failed. decision_logic is ALL_RULES_MUST_PASS,
+so one critical failure is enough to fail the overall assessment.)
+
+
+===============================================================
+STEP 4: DECIDE
+(the AGENT's own assessment -- it cannot approve or deny a claim)
+===============================================================
+state.decision = DOES_NOT_MEET_CRITERIA
+
+This is an assessment, not an adjudication. Only the insurer, via Server 3,
+can actually approve or deny a claim. A DOES_NOT_MEET_CRITERIA assessment
+does not mean the agent rejects John's case outright -- it means the case
+is routed onward (to a human reviewer, or submitted for the insurer to
+actually decide) rather than auto-submitted as a clean approval.
+
+
+===============================================================
+STEPS 5-7: ACT / TRACK / ON DENIAL
+(Server 3 -- SIMULATED insurer response; no live payer API exists)
+===============================================================
+Because John's case did not meet criteria, the simulated flow proceeds as
+if the case was submitted and the insurer (not the agent) returned a
+denial:
+
+  (simulated) denial_reason_code: 16
+  (simulated) appeal_draft:
+    "Per medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity,
+     requesting reconsideration for patient P1000 with updated
+     conservative treatment documentation."
+
+The appeal draft is grounded in the real policy chunk_id that was actually
+retrieved in Step 2 -- it is not a generic denial letter.
+
+
+===============================================================
+RESULT
+===============================================================
+PASS -- John's (P1000) full 7-step flow ran end to end using real
+components:
+  - A real retrieval from Yashasvi's rag_pipeline.py (Step 2)
+  - The real, current config/criteria_rules.yaml (Step 3)
+  - Correct MEETS_CRITERIA / NEEDS_DOCS / DOES_NOT_MEET_CRITERIA
+    terminology (Step 4), reflecting that the agent assesses, it does
+    not adjudicate
+
+Final decision: DOES_NOT_MEET_CRITERIA
+  (matches the workplan's expected outcome for this case)
+
+What is still simulated, not live:
+  - Server 1 (Nancy's patient/claims data) -- no live Snowflake connection
+  - Server 3 (the insurer's actual response) -- no live payer API access
+
+What is real and verified, not assumed:
+  - The retrieved policy chunk and its relevance score
+  - The rule evaluation logic and its citations
+  - The terminology and routing logic of the decision step
+
+Open item carried forward: John's payer was changed from "Aetna" (which
+does not exist in the real data) to "Medicare" for this test. This should
+be confirmed with the team, particularly Yashasvi, before this example is
+used in a final presentation.
