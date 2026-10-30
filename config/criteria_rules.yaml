@@ -28,6 +28,7 @@ procedures:
     rules:
       - rule: "conservative_treatment_weeks >= 6 or red_flag_present"
         source: "CLAIMS"
+        basis: "policy"
         cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base 6-week requirement
           - "medicare_lcd_lumbar_mri::red_flag_conditions"  # exception: skip the wait if a red flag is present
@@ -53,31 +54,59 @@ procedures:
         # matching the conditions above. The evaluator that does this
         # computation doesn't exist yet.
 
-      - rule: "'M54.16' in diagnosis_codes"
+      - rule: "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present"
         source: "CLAIMS"
-        cites_chunk: "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"
+        basis: "policy"
+        cites_chunk:
+          - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base radiculopathy requirement
+          - "medicare_lcd_lumbar_mri::red_flag_conditions"  # exception: red flags don't require a confirmed diagnosis code yet
         cites_chunk_confirmed_by: >
-          Confirmed by reading the real policy text directly
-          (data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt).
+          Base clause confirmed by reading the real policy text directly
+          (data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt) --
           REPLACES the old "imaging_finding in ['disc_herniation', 'stenosis']"
-          rule, which matched nothing in the real policy -- "disc herniation"
-          and "stenosis" appear nowhere in any of its 4 sections. The real
-          medical-necessity sentence requires radiculopathy (pain, numbness,
-          or weakness radiating into the leg), ICD-10-CM M54.16, as a
-          separate, equally-required condition alongside the 6-week
-          conservative-treatment rule above -- not an imaging finding at all.
+          rule, which matched nothing in the real policy. The policy text
+          requires "radiculopathy (pain, numbness, or weakness radiating into
+          the leg)" without naming one specific code, so this rule accepts
+          the 3 clinically correct ICD-10-CM codes a physician might actually
+          use: M54.16 (radiculopathy, lumbar region, cause unspecified),
+          M54.17 (radiculopathy, lumbosacral region -- a real sibling code,
+          used when involvement extends to the L5-S1 junction), and M51.16
+          (radiculopathy specifically caused by a disc disorder). Verified
+          via ICD-10-CM coding references, not assumed.
+          FIXED (caught by Yashasvi's verify-citations tool): this rule
+          previously required M54.16 with no exception, which meant a
+          red-flag patient (e.g. suspected malignancy with back pain, no
+          radiculopathy diagnosis confirmed yet) would fail here even though
+          Rule 1's red-flag exception correctly passed them -- contradicting
+          the policy's own intent that red flags justify immediate imaging
+          without waiting on other findings. Exception clause cites the same
+          Red Flag Conditions section as Rule 1.
           Also fixes "source: OBSERVATIONS", which pointed at a table that
           does not exist in Nancy's schema (PATIENTS/CLAIMS/POLICIES only);
           diagnosis_code is a real CLAIMS column.
-        severity: "critical"  # part of the same compound AND condition as the 6-week rule -- judgment call, confirm with team
-        description: "Patient must have a documented lumbar radiculopathy diagnosis (M54.16) per the policy's core medical necessity criterion"
+        severity: "critical"
+        description: >
+          Patient must have a documented radiculopathy diagnosis (M54.16,
+          M54.17, or M51.16), UNLESS a red-flag condition is present, in
+          which case imaging is justified without waiting on a confirmed
+          diagnosis code
 
       - rule: "patient_age >= 18"
         source: "PATIENTS"
+        basis: "team_assumption"  # NOT derived from any real policy text -- see cites_chunk_confirmed_by
         cites_chunk: null
-        cites_chunk_confirmed_by: "No matching section found in Medicare's 4 real headings -- likely a general eligibility rule, not grounded in policy text"
+        cites_chunk_confirmed_by: >
+          CONFIRMED ABSENT, not just unfound: none of the 8 real synthetic
+          policies (Medicare or commercial) mention a patient age requirement
+          anywhere -- flagged by Yashasvi's verify-citations tool. This rule
+          originated from the old generic Aetna-style template, not from any
+          real policy text. Kept as a project scope assumption (this system
+          is being demonstrated for adult patients), explicitly labeled as
+          team-added rather than policy-derived, rather than presented as if
+          a real payer requires it. Team decision needed: keep as a labeled
+          scope assumption, or remove entirely.
         severity: "high"
-        description: "Patient must be 18 or older"
+        description: "Patient must be 18 or older -- a team scope assumption for this demo, not a requirement from any real policy text"
 
     decision_logic: "ALL_RULES_MUST_PASS"
     approval_threshold: 0.95
