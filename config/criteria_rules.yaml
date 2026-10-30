@@ -27,7 +27,7 @@ procedures:
   lumbar_mri:
     rules:
       - rule: "conservative_treatment_weeks >= 6 or red_flag_present"
-        source: "CLAIMS"
+        source: "PA_CLAIMS"
         basis: "policy"
         cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base 6-week requirement
@@ -49,13 +49,13 @@ procedures:
           dysfunction, saddle numbness, suspected infection, malignancy, or
           fracture) is present, which allows immediate imaging
         # NOTE: red_flag_present is a derived/computed boolean, same as
-        # conservative_treatment_weeks -- it isn't a raw CLAIMS column. It
+        # conservative_treatment_weeks -- it isn't a raw PA_CLAIMS column. It
         # would need to be computed from diagnosis/observation codes
         # matching the conditions above. The evaluator that does this
         # computation doesn't exist yet.
 
       - rule: "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present"
-        source: "CLAIMS"
+        source: "PA_CLAIMS"
         basis: "policy"
         cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base radiculopathy requirement
@@ -82,8 +82,8 @@ procedures:
           without waiting on other findings. Exception clause cites the same
           Red Flag Conditions section as Rule 1.
           Also fixes "source: OBSERVATIONS", which pointed at a table that
-          does not exist in Nancy's schema (PATIENTS/CLAIMS/POLICIES only);
-          diagnosis_code is a real CLAIMS column.
+          does not exist in Nancy's schema (PA_CLAIMS/DIM_PATIENTS/DIM_POLICIES only);
+          diagnosis_code is a real PA_CLAIMS column (FK to DIM_DIAGNOSES).
         severity: "critical"
         description: >
           Patient must have a documented radiculopathy diagnosis (M54.16,
@@ -92,7 +92,7 @@ procedures:
           diagnosis code
 
       - rule: "patient_age >= 18"
-        source: "PATIENTS"
+        source: "DIM_PATIENTS"
         basis: "team_assumption"  # NOT derived from any real policy text -- see cites_chunk_confirmed_by
         cites_chunk: null
         cites_chunk_confirmed_by: >
@@ -110,3 +110,4 @@ procedures:
 
     decision_logic: "ALL_RULES_MUST_PASS"
     approval_threshold: 0.95
+    
