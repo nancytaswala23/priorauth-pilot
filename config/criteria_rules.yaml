@@ -2,8 +2,14 @@
 # policy during Step 3 (Evaluate Criteria) of the agent loop.
 # See docs/mcp_design.md for where this fits in the overall flow.
 #
-# "source" names which table / data source the check reads from (Nancy's
-# Snowflake tables). "cites_chunk" names the exact policy chunk_id (from
+# "source" names which real table(s) the check reads from, in Nancy's live
+# Snowflake star schema (confirmed with her directly, not assumed):
+# fact table PA_CLAIMS, dimensions DIM_PATIENTS / DIM_PROCEDURES /
+# DIM_DIAGNOSES / DIM_POLICIES / DIM_DECISIONS. "source" is a list on any
+# rule that genuinely reads from more than one table, not a single string
+# forced to cover both.
+#
+# "cites_chunk" names the exact policy chunk_id (from
 # Yashasvi's src/rag/rag_pipeline.py) that justifies this rule -- her own
 # chunk_id format (policy_id::section_slug) is built specifically so rules
 # here can cite it directly, rather than a loose section-name string. Note:
@@ -18,7 +24,6 @@
 # these rules need a per-payer variant, or cites_chunk needs to be resolved
 # dynamically based on which policy was actually retrieved.
 #
-# "source" names which table / data source the check reads from.
 # "severity" controls how a failed rule affects the decision step:
 #   critical -> blocks approval outright (routes to NEEDS_DOCS or DENIED)
 #   high     -> lowers confidence / may still trigger a documentation request
@@ -27,7 +32,9 @@ procedures:
   lumbar_mri:
     rules:
       - rule: "conservative_treatment_weeks >= 6 or red_flag_present"
-        source: "PA_CLAIMS"
+        source:
+          - "PA_CLAIMS"  # conservative_treatment_weeks: derived from claim_date here, minus treatment_start_date -- see computation note below
+          - "DIM_DIAGNOSES"  # red_flag_present: derived from diagnosis_code here, per Nancy -- NOT a PA_CLAIMS fact
         basis: "policy"
         cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base 6-week requirement
@@ -48,14 +55,22 @@ procedures:
           treatment, UNLESS a red-flag condition (e.g. new bladder/bowel
           dysfunction, saddle numbness, suspected infection, malignancy, or
           fracture) is present, which allows immediate imaging
-        # NOTE: red_flag_present is a derived/computed boolean, same as
-        # conservative_treatment_weeks -- it isn't a raw PA_CLAIMS column. It
-        # would need to be computed from diagnosis/observation codes
-        # matching the conditions above. The evaluator that does this
-        # computation doesn't exist yet.
+        # COMPUTATION, confirmed by Nancy (neither field is a raw column):
+        #   conservative_treatment_weeks = (claim_date - treatment_start_date) in weeks.
+        #     claim_date lives in PA_CLAIMS. treatment_start_date does NOT exist in
+        #     any table yet -- there is no treatment history table. Real gap, not
+        #     yet solved. For Saturday's demo, this value is hardcoded in test
+        #     data (simulated_claims_lookup), standing in for this computation.
+        #   red_flag_present = diagnosis_code (DIM_DIAGNOSES, via PA_CLAIMS FK) is
+        #     in a red-flag code list (cauda equina, progressive neurologic
+        #     deficit, spinal infection, malignancy, fracture). The exact ICD-10
+        #     codes for each of those 5 conditions have NOT been verified yet --
+        #     same kind of check the M54.16/M54.17/M51.16 codes below went
+        #     through, just not done for this field yet. Also hardcoded in test
+        #     data for Saturday's demo.
 
       - rule: "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present"
-        source: "PA_CLAIMS"
+        source: "DIM_DIAGNOSES"  # BOTH halves of this rule trace here: diagnosis_codes directly, AND red_flag_present (also derived from diagnosis_code, per Nancy) -- not PA_CLAIMS
         basis: "policy"
         cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base radiculopathy requirement
@@ -82,8 +97,12 @@ procedures:
           without waiting on other findings. Exception clause cites the same
           Red Flag Conditions section as Rule 1.
           Also fixes "source: OBSERVATIONS", which pointed at a table that
-          does not exist in Nancy's schema (PA_CLAIMS/DIM_PATIENTS/DIM_POLICIES only);
-          diagnosis_code is a real PA_CLAIMS column (FK to DIM_DIAGNOSES).
+          never existed. UPDATED per Nancy's confirmed real schema: diagnosis
+          code lives in DIM_DIAGNOSES (a separate dimension, joined via
+          foreign key), not embedded in the claim row. red_flag_present is
+          ALSO derived from diagnosis_code (not a PA_CLAIMS fact), so both
+          halves of this rule trace to the same table -- source simplifies
+          to a single "DIM_DIAGNOSES" value, not a list.
         severity: "critical"
         description: >
           Patient must have a documented radiculopathy diagnosis (M54.16,
@@ -92,7 +111,7 @@ procedures:
           diagnosis code
 
       - rule: "patient_age >= 18"
-        source: "DIM_PATIENTS"
+        source: "DIM_PATIENTS"  # confirmed by Nancy: real dimension table name, not "PATIENTS"
         basis: "team_assumption"  # NOT derived from any real policy text -- see cites_chunk_confirmed_by
         cites_chunk: null
         cites_chunk_confirmed_by: >
@@ -110,4 +129,3 @@ procedures:
 
     decision_logic: "ALL_RULES_MUST_PASS"
     approval_threshold: 0.95
-    
