@@ -1,0 +1,15 @@
+@"
+priorauth_pilot:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: RA13946
+      user: Nancy.taswala
+      password: temp123Pass!
+      database: priorauth_db
+      schema: public
+      threads: 4
+      client_session_keep_alive: False
+      warehouse: SNOWFLAKE_LEARNING_WH
+"@ | Out-File -FilePath C:\Users\taswa\.dbt\profiles.yml -Encoding UTF8 -Force
