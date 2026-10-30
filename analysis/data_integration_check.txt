@@ -1,0 +1,29 @@
+﻿Patients: 100 rows  (D:\priorauth-pilot\data\patients_sample.csv)
+Claims:   313 rows  (D:\priorauth-pilot\data\claims_sample.csv)
+Payer column used: insurance
+
+1. Payers in the data (by claim):
+   OK       SampleCommercial: 205 claims
+   OK       Medicare: 108 claims
+   Policy library knows: Medicare, SampleCommercial
+
+2. Procedure codes: 5 distinct, 3 have a policy
+   OK         72148: 73 claims -> medicare_lcd_lumbar_mri, commercial_lumbar_mri
+   OK         72149: 65 claims -> medicare_lcd_lumbar_mri, commercial_lumbar_mri
+   OK         72158: 61 claims -> medicare_lcd_lumbar_mri, commercial_lumbar_mri
+   NO POLICY  99213 (59), 99214 (55)
+              (fine for codes that never need prior auth, e.g. office visits)
+
+3. States: 14 distinct, 0 not in state_jurisdiction.yaml
+
+4. Lookup simulation (claims whose procedure has a policy):
+   OK    policy found: 199/199
+
+5. Fields the agent's rules read:
+   OK       diagnosis_code
+   OK       conservative_treatment_weeks
+   OK       red_flag_present
+   OK       age
+   note: one diagnosis_code per claim row; the rules check a list (diagnosis_codes), so codes need to be collected per patient
+
+Result: 199/199 relevant claims would find a policy; 0 rule field(s) missing from the data

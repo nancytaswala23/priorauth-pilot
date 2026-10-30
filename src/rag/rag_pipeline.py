@@ -16,6 +16,9 @@ Usage (run from the repo root):
   python src/rag/rag_pipeline.py demo
   python src/rag/rag_pipeline.py eval
   python src/rag/rag_pipeline.py compare
+  python src/rag/rag_pipeline.py verify-citations
+  python src/rag/rag_pipeline.py export-metadata
+  python src/rag/rag_pipeline.py query "MRI rules" --payer Medicare --state MA
 
 Options for every command:
   --backend auto|faiss|tfidf|hybrid
@@ -50,6 +53,8 @@ CONFIG_PATH = REPO_ROOT / "config" / "chunking_strategy.yaml"
 INDEX_DIR = REPO_ROOT / "data" / "index"
 INDEX_FILE = INDEX_DIR / "policies.faiss"
 CHUNKS_FILE = INDEX_DIR / "chunks.json"
+STATE_MAP_PATH = REPO_ROOT / "config" / "state_jurisdiction.yaml"
+BLIND_EVAL_PATH = REPO_ROOT / "config" / "blind_eval_questions.yaml"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 RERANK_CANDIDATES = 10
@@ -149,6 +154,22 @@ def embed_text(chunk, use_section_names=True):
     if use_section_names:
         return f"{chunk['payer']} | {chunk['section']}: {chunk['text']}"
     return f"{chunk['payer']}: {chunk['text']}"
+
+
+def jurisdiction_for_state(state):
+    """Map a US state code (e.g. 'MA') to its Medicare A/B MAC jurisdiction (e.g. 'JK')
+    using config/state_jurisdiction.yaml. Returns None if the state is unknown."""
+    if not state:
+        return None
+    if not STATE_MAP_PATH.exists():
+        sys.exit(f"ERROR: state map not found: {STATE_MAP_PATH}")
+    with open(STATE_MAP_PATH, encoding="utf-8") as f:
+        mapping = yaml.safe_load(f)["jurisdictions"]
+    state = state.strip().upper()
+    for jurisdiction, states in mapping.items():
+        if state in [x.upper() for x in states]:
+            return jurisdiction
+    return None
 
 
 def matches_filters(chunk, payer=None, procedure_code=None, jurisdiction=None):
@@ -381,10 +402,16 @@ def print_results(query, results):
 
 
 def cmd_query(args):
+    jurisdiction = args.jurisdiction
+    if args.state:
+        jurisdiction = jurisdiction_for_state(args.state)
+        if jurisdiction is None:
+            sys.exit(f"ERROR: unknown state code '{args.state}' (see config/state_jurisdiction.yaml)")
+        print(f"(state {args.state.upper()} -> Medicare jurisdiction {jurisdiction})")
     r = get_retriever(args.backend, not args.no_section_names, use_rerank=args.rerank)
     print(describe(r))
     print_results(args.question, r.search(args.question, args.payer, args.procedure,
-                                          args.jurisdiction, args.k))
+                                          jurisdiction, args.k))
 
 
 DEMO_QUERIES = [
@@ -457,13 +484,37 @@ EVAL_SET = [
 ]
 
 
+def load_eval_set():
+    """Built-in questions plus any 'blind' questions written by people who did
+    not see the policies (config/blind_eval_questions.yaml)."""
+    items = list(EVAL_SET)
+    if BLIND_EVAL_PATH.exists():
+        with open(BLIND_EVAL_PATH, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        for q in data.get("questions") or []:
+            # expected_chunk may be one id or a list of equally acceptable ids
+            items.append(("blind", q["question"], q.get("payer"),
+                          str(q["procedure_code"]), q["expected_chunk"]))
+    return items
+
+
+def difficulties(rows):
+    return [d for d in ("easy", "hard", "blind") if any(r["difficulty"] == d for r in rows)]
+
+
 def run_eval(retriever, k=3):
+    known = {c["chunk_id"] for c in retriever.chunks}
     rows = []
-    for difficulty, q, payer, code, expected in EVAL_SET:
+    for difficulty, q, payer, code, expected in load_eval_set():
+        accepted = expected if isinstance(expected, list) else [expected]
+        for cid in accepted:
+            if cid not in known:
+                print(f"WARNING: expected chunk does not exist: {cid}  (question: {q})")
         ids = [r["chunk_id"] for r in retriever.search(q, payer, code, k=k)]
-        rows.append({"difficulty": difficulty, "question": q, "expected": expected,
+        rows.append({"difficulty": difficulty, "question": q, "expected": " | ".join(accepted),
                      "top": ids[0] if ids else None,
-                     "hit1": ids[:1] == [expected], "hitk": expected in ids})
+                     "hit1": bool(ids) and ids[0] in accepted,
+                     "hitk": any(i in accepted for i in ids)})
     return rows
 
 
@@ -481,7 +532,7 @@ def cmd_eval(args):
         print(f"  {status:6} [{row['difficulty']}] {row['question']}")
         if not row["hit1"]:
             print(f"         expected {row['expected']}, got {row['top']}")
-    for d in ("easy", "hard"):
+    for d in difficulties(rows):
         h1, hk, n = summarize(rows, d)
         print(f"\n{d.upper():5} Hit@1: {h1}/{n}   Hit@{args.k}: {hk}/{n}", end="")
     h1, hk, n = sum(x["hit1"] for x in rows), sum(x["hitk"] for x in rows), len(rows)
@@ -509,15 +560,21 @@ def cmd_compare(args):
     def label(backend, use_rerank):
         return base[backend] + (" + rerank" if use_rerank else "")
 
-    print(f"{'Method':28} {'Section names':14} {'Easy @1':>8} {'Easy @' + str(k):>8} "
-          f"{'Hard @1':>8} {'Hard @' + str(k):>8} {'All @1':>8} {'All @' + str(k):>8}")
-    print("-" * 98)
+    groups = difficulties(results[0][3])
+    header = f"{'Method':28} {'Section names':14}"
+    for d in groups + ["all"]:
+        header += f" {d.capitalize() + ' @1':>9} {d.capitalize() + ' @' + str(k):>9}"
+    print(header)
+    print("-" * len(header))
     for backend, names, use_rerank, rows in results:
-        e1, ek, en = summarize(rows, "easy")
-        h1, hk, hn = summarize(rows, "hard")
-        print(f"{label(backend, use_rerank):28} {('yes' if names else 'no'):14} "
-              f"{f'{e1}/{en}':>8} {f'{ek}/{en}':>8} {f'{h1}/{hn}':>8} {f'{hk}/{hn}':>8} "
-              f"{f'{e1 + h1}/{en + hn}':>8} {f'{ek + hk}/{en + hn}':>8}")
+        line = f"{label(backend, use_rerank):28} {('yes' if names else 'no'):14}"
+        t1 = tk = tn = 0
+        for d in groups:
+            h1, hk, n = summarize(rows, d)
+            t1, tk, tn = t1 + h1, tk + hk, tn + n
+            line += f" {f'{h1}/{n}':>9} {f'{hk}/{n}':>9}"
+        line += f" {f'{t1}/{tn}':>9} {f'{tk}/{tn}':>9}"
+        print(line)
 
     print("\nQuestions missed at #1:")
     for backend, names, use_rerank, rows in results:
@@ -530,24 +587,29 @@ def cmd_compare(args):
 
 # --------------------------------------------------------- verify-citations
 RULES_PATH = REPO_ROOT / "config" / "criteria_rules.yaml"
+METADATA_FILE = REPO_ROOT / "data" / "processed" / "policies_metadata.csv"
 ICD_CODE = re.compile(r"\b[A-Z][0-9]{2}\.[0-9A-Z]{1,4}\b")
 
 
-def _collect_citations(node, rule=None, found=None):
-    """Walk criteria_rules.yaml whatever its layout and collect every
-    *cites_chunk value together with the rule it belongs to."""
+def _collect_rules(node, found=None):
+    """Walk criteria_rules.yaml whatever its layout and collect every rule
+    (a mapping with a 'rule' key), its basis, and all *cites_chunk values."""
     found = [] if found is None else found
     if isinstance(node, dict):
-        rule = node.get("rule", rule)
-        for key, value in node.items():
-            if key.endswith("cites_chunk"):
-                for cid in (value if isinstance(value, list) else [value]):
-                    found.append((str(rule), key, str(cid)))
-            else:
-                _collect_citations(value, rule, found)
+        if "rule" in node:
+            cites = []
+            for key, value in node.items():
+                if key.endswith("cites_chunk") and value not in (None, ""):
+                    cites += [str(v) for v in (value if isinstance(value, list) else [value]) if v]
+            found.append({"rule": str(node["rule"]),
+                          "basis": str(node.get("basis") or "policy"),
+                          "cites": cites})
+        for value in node.values():
+            if isinstance(value, (dict, list)):
+                _collect_rules(value, found)
     elif isinstance(node, list):
         for item in node:
-            _collect_citations(item, rule, found)
+            _collect_rules(item, found)
     return found
 
 
@@ -556,46 +618,196 @@ def cmd_verify_citations(args):
     if not path.exists():
         sys.exit(f"ERROR: rules file not found: {path}")
     with open(path, encoding="utf-8") as f:
-        rules_yaml = yaml.safe_load(f)
-
+        rules = _collect_rules(yaml.safe_load(f))
+    if not rules:
+        sys.exit("ERROR: no rules found in the rules file.")
     chunks = {c["chunk_id"]: c for c in build_chunks(load_config(), warn=False)}
-    citations = _collect_citations(rules_yaml)
-    if not citations:
-        sys.exit("ERROR: no cites_chunk values found in the rules file.")
 
-    print(f"Checking {len(citations)} citation(s) in {path.name} against "
-          f"{len(chunks)} policy chunks\n")
+    def is_assumption(r):
+        return "assumption" in r["basis"].lower()
+
+    def is_translation(r):
+        return "translation" in r["basis"].lower()
+
+    print(f"Checking {len(rules)} rule(s) in {path.name} against {len(chunks)} policy chunks\n")
 
     # Check 1: does every cited chunk exist?
-    missing = 0
-    for rule, key, cid in citations:
-        ok = cid in chunks
-        missing += not ok
-        print(f"  {'PASS' if ok else 'FAIL'}  {cid}")
-        print(f"        {key} of rule: {rule}")
+    checked = found = missing = skipped = 0
+    for r in rules:
+        print(f"  rule: {r['rule']}   (basis: {r['basis']})")
+        if is_assumption(r):
+            skipped += 1
+            print("    SKIPPED  team assumption, no policy citation expected")
+            continue
+        if not r["cites"]:
+            missing += 1
+            print("    FAIL     no citation")
+            continue
+        for cid in r["cites"]:
+            ok = cid in chunks
+            checked += 1
+            found += ok
+            missing += not ok
+            print(f"    {'PASS' if ok else 'FAIL'}     {cid}")
 
     # Check 2 (heuristic): diagnosis codes and numbers in a rule
     # should appear in at least one of the sections it cites.
     print("\nSupport check (heuristic: codes and numbers in each rule vs. cited text):")
-    by_rule = {}
-    for rule, _, cid in citations:
-        by_rule.setdefault(rule, []).append(cid)
-    warnings = 0
-    for rule, cids in by_rule.items():
-        text = " ".join(chunks[c]["text"] for c in cids if c in chunks)
-        terms = ICD_CODE.findall(rule) + re.findall(r"(?<![\w.])\d+(?![\w.])", rule)
+    warnings = notes = 0
+    for r in rules:
+        if is_assumption(r):
+            print(f"  SKIPPED  {r['rule']}  (team assumption)")
+            continue
+        text = " ".join(chunks[c]["text"] for c in r["cites"] if c in chunks)
+        terms = ICD_CODE.findall(r["rule"]) + re.findall(r"(?<![\w.])\d+(?![\w.])", r["rule"])
         unsupported = [t for t in terms if t not in text]
-        if unsupported:
-            warnings += 1
-            print(f"  WARN  rule: {rule}")
-            print(f"        not found in cited text: {', '.join(unsupported)}")
+        if not unsupported:
+            print(f"  OK       {r['rule']}")
+        elif is_translation(r):
+            notes += 1
+            print(f"  NOTE     {r['rule']}")
+            print(f"           not literally in cited text (expected, clinical code translation): "
+                  f"{', '.join(unsupported)}")
         else:
-            print(f"  OK    rule: {rule}")
+            warnings += 1
+            print(f"  WARN     {r['rule']}")
+            print(f"           not found in cited text: {', '.join(unsupported)}")
 
-    print(f"\nResult: {len(citations) - missing}/{len(citations)} citations exist, "
-          f"{warnings} rule(s) with unsupported terms")
+    print(f"\nResult: {found}/{checked} citations exist, "
+          f"{missing} missing, {skipped} team assumption(s) skipped, "
+          f"{warnings} warning(s), {notes} note(s)")
     if missing:
         sys.exit(1)
+
+
+# --------------------------------------------------------- export-metadata
+def cmd_export_metadata(args):
+    """Write one row per (policy, procedure code) for loading into the
+    Snowflake POLICIES table. Policy text stays in the files; this is metadata."""
+    import csv
+    config = load_config()
+    chunks = build_chunks(config, warn=False)
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    rows = 0
+    with open(out, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["policy_id", "payer_name", "procedure_code", "document_type",
+                    "jurisdiction", "synthetic", "source_file", "section_count"])
+        for p in config["policies"]:
+            codes = p.get("procedure_codes") or [p["procedure_code"]]
+            n_sections = sum(1 for c in chunks if c["policy_id"] == p["policy_id"])
+            for code in codes:
+                w.writerow([p["policy_id"], p["payer"], str(code), p.get("document_type", ""),
+                            p.get("jurisdiction", "national"), bool(p.get("synthetic", False)),
+                            p["file"], n_sections])
+                rows += 1
+    print(f"Wrote {rows} rows ({len(config['policies'])} policies) to {out}")
+
+
+# -------------------------------------------------------------- check-data
+PATIENTS_CSV = REPO_ROOT / "data" / "patients_sample.csv"
+CLAIMS_CSV = REPO_ROOT / "data" / "claims_sample.csv"
+# Fields the agent's rules read (criteria_rules.yaml). Reported if no CSV has them.
+RULE_FIELDS = ["diagnosis_code", "conservative_treatment_weeks", "red_flag_present", "age"]
+
+
+def cmd_check_data(args):
+    """Check Nancy's patient/claims CSVs against the policy library: would each
+    claim find a policy? Reports unknown payers, procedure codes without a policy,
+    unknown states, and Medicare patients whose region has no policy."""
+    import csv
+    from collections import Counter
+
+    def read(path):
+        path = Path(path)
+        if not path.exists():
+            sys.exit(f"ERROR: file not found: {path}")
+        with open(path, newline="", encoding="utf-8-sig") as f:
+            rows = list(csv.DictReader(f))
+        return rows, (list(rows[0].keys()) if rows else [])
+
+    patients, p_cols = read(args.patients)
+    claims, c_cols = read(args.claims)
+    payer_col = next((c for c in ("payer", "payer_name", "insurance") if c in p_cols + c_cols), None)
+
+    config = load_config()
+    policies = config["policies"]
+    known_payers = {p["payer"] for p in policies}
+    code_to_policies = {}
+    for p in policies:
+        for code in p.get("procedure_codes") or [p["procedure_code"]]:
+            code_to_policies.setdefault(str(code), []).append(p)
+
+    by_patient = {r["patient_id"]: r for r in patients}
+    print(f"Patients: {len(patients)} rows  ({args.patients})")
+    print(f"Claims:   {len(claims)} rows  ({args.claims})")
+    print(f"Payer column used: {payer_col or 'NONE FOUND'}\n")
+
+    # 1. Payers
+    payers = Counter((by_patient.get(c["patient_id"], {}).get(payer_col) or c.get(payer_col) or "").strip()
+                     for c in claims) if payer_col else Counter()
+    print("1. Payers in the data (by claim):")
+    for name, n in payers.most_common():
+        print(f"   {'OK     ' if name in known_payers else 'UNKNOWN'}  {name or '(blank)'}: {n} claims")
+    print(f"   Policy library knows: {', '.join(sorted(known_payers))}")
+
+    # 2. Procedure codes
+    codes = Counter(str(c.get("procedure_code", "")).strip() for c in claims)
+    with_policy = {k: v for k, v in codes.items() if k in code_to_policies}
+    print(f"\n2. Procedure codes: {len(codes)} distinct, {len(with_policy)} have a policy")
+    for code, n in sorted(with_policy.items(), key=lambda x: -x[1]):
+        names = ", ".join(p["policy_id"] for p in code_to_policies[code])
+        print(f"   OK         {code}: {n} claims -> {names}")
+    no_policy = [(k, v) for k, v in codes.most_common() if k not in code_to_policies]
+    if no_policy:
+        print("   NO POLICY  " + ", ".join(f"{k} ({v})" for k, v in no_policy[:15])
+              + (" ..." if len(no_policy) > 15 else ""))
+        print("              (fine for codes that never need prior auth, e.g. office visits)")
+
+    # 3. States
+    states = Counter((r.get("state") or "").strip().upper() for r in patients)
+    unknown_states = {s: n for s, n in states.items() if jurisdiction_for_state(s) is None}
+    print(f"\n3. States: {len(states)} distinct, {len(unknown_states)} not in state_jurisdiction.yaml")
+    for st, n in unknown_states.items():
+        print(f"   UNKNOWN  {st or '(blank)'}: {n} patients")
+
+    # 4. Would each relevant claim find a policy?
+    print("\n4. Lookup simulation (claims whose procedure has a policy):")
+    outcome = Counter()
+    for c in claims:
+        code = str(c.get("procedure_code", "")).strip()
+        if code not in code_to_policies:
+            continue
+        pt = by_patient.get(c["patient_id"], {})
+        payer = ((pt.get(payer_col) if payer_col else "") or c.get(payer_col or "", "") or "").strip()
+        juris = jurisdiction_for_state(pt.get("state", ""))
+        candidates = [p for p in code_to_policies[code] if p["payer"] == payer]
+        if not pt:
+            outcome["patient_id not in patients file"] += 1
+        elif not candidates:
+            outcome[f"no policy for payer '{payer or '(blank)'}'"] += 1
+        elif not any(p.get("jurisdiction", "national") in ("national", juris) for p in candidates):
+            outcome[f"no {payer} policy for region {juris}"] += 1
+        else:
+            outcome["policy found"] += 1
+    total = sum(outcome.values())
+    for reason, n in outcome.most_common():
+        print(f"   {'OK  ' if reason == 'policy found' else 'MISS'}  {reason}: {n}/{total}")
+
+    # 5. Fields the agent's rules need
+    cols = set(p_cols) | set(c_cols)
+    missing = [f for f in RULE_FIELDS if f not in cols]
+    print("\n5. Fields the agent's rules read:")
+    for f in RULE_FIELDS:
+        print(f"   {'OK     ' if f in cols else 'MISSING'}  {f}")
+    if "diagnosis_code" in cols:
+        print("   note: one diagnosis_code per claim row; the rules check a list (diagnosis_codes),"
+              " so codes need to be collected per patient")
+
+    found = outcome.get("policy found", 0)
+    print(f"\nResult: {found}/{total} relevant claims would find a policy; "
+          f"{len(missing)} rule field(s) missing from the data")
 
 
 # -------------------------------------------------------------------- main
@@ -619,6 +831,7 @@ def main():
     q.add_argument("--payer", help="filter by payer, e.g. Medicare")
     q.add_argument("--procedure", help="filter by procedure code, e.g. 72148")
     q.add_argument("--jurisdiction", help="filter by jurisdiction, e.g. JK (national policies always match)")
+    q.add_argument("--state", help="patient's state, e.g. MA; converted to a Medicare jurisdiction")
     q.add_argument("-k", type=int, default=3, help="number of results")
 
     sub.add_parser("demo", parents=[common], help="run the class demo queries")
@@ -633,10 +846,19 @@ def main():
                        help="check that criteria_rules.yaml cites real chunks that support each rule")
     v.add_argument("--rules", default=str(RULES_PATH), help="path to criteria_rules.yaml")
 
+    m = sub.add_parser("export-metadata", help="write policy metadata CSV for the POLICIES table")
+    m.add_argument("--out", default=str(METADATA_FILE))
+
+    d = sub.add_parser("check-data", help="check Nancy's patient/claims CSVs against the policy library")
+    d.add_argument("--patients", default=str(PATIENTS_CSV))
+    d.add_argument("--claims", default=str(CLAIMS_CSV))
+
     args = parser.parse_args()
     {"build": cmd_build, "query": cmd_query, "demo": cmd_demo,
      "eval": cmd_eval, "compare": cmd_compare,
-     "verify-citations": cmd_verify_citations}[args.command](args)
+     "verify-citations": cmd_verify_citations,
+     "export-metadata": cmd_export_metadata,
+     "check-data": cmd_check_data}[args.command](args)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,18 @@
+﻿Checking 3 rule(s) in criteria_rules.yaml against 46 policy chunks
+
+  rule: conservative_treatment_weeks >= 6 or red_flag_present   (basis: policy)
+    PASS     medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+    PASS     medicare_lcd_lumbar_mri::red_flag_conditions
+  rule: any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present   (basis: policy_with_code_translation)
+    PASS     medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+    PASS     medicare_lcd_lumbar_mri::red_flag_conditions
+  rule: patient_age >= 18   (basis: team_assumption)
+    SKIPPED  team assumption, no policy citation expected
+
+Support check (heuristic: codes and numbers in each rule vs. cited text):
+  OK       conservative_treatment_weeks >= 6 or red_flag_present
+  NOTE     any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present
+           not literally in cited text (expected, clinical code translation): M54.16, M54.17, M51.16
+  SKIPPED  patient_age >= 18  (team assumption)
+
+Result: 4/4 citations exist, 0 missing, 1 team assumption(s) skipped, 0 warning(s), 1 note(s)

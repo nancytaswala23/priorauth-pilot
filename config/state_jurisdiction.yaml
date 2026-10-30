@@ -1,0 +1,17 @@
+# Medicare Part A/B MAC jurisdictions by state.
+# Used to turn a patient's state (from Nancy's PATIENTS table) into the
+# jurisdiction filter for policy search. Verify against the current CMS
+# "Who are the MACs" map before relying on it; assignments can change.
+jurisdictions:
+  J5: [IA, KS, MO, NE]
+  J6: [IL, MN, WI]
+  J8: [IN, MI]
+  J15: [KY, OH]
+  JE: [CA, HI, NV, AS, GU, MP]
+  JF: [AK, AZ, ID, MT, ND, OR, SD, UT, WA, WY]
+  JH: [AR, CO, LA, MS, NM, OK, TX]
+  JJ: [AL, GA, TN]
+  JK: [CT, ME, MA, NH, RI, VT, NY]
+  JL: [DE, DC, MD, NJ, PA]
+  JM: [NC, SC, VA, WV]
+  JN: [FL, PR, VI]
