@@ -130,6 +130,7 @@ try:
         section=top["section"],
         text=top["text"],
         source_file=top["source_file"],
+        score=top["score"],
     )
     state.applicable_policy = state.regional_policy
     check("PolicyReference built from real chunk with zero translation", True)
@@ -138,6 +139,7 @@ except (KeyError, TypeError) as e:
     sys.exit("Cannot continue.")
 
 print(f"  Derived source_level: {state.applicable_policy.source_level}")
+print(f"  state.applicable_policy.score: {state.applicable_policy.score}")
 
 # ---------------------------------------------------------------- STEP 2b
 section("STEP 2b: Cross-check against criteria_rules.yaml's existing citation")
