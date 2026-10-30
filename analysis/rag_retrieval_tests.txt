@@ -1,0 +1,120 @@
+RAG RETRIEVAL TESTS (Owner: Yashasvi)
+=====================================
+
+Setup
+-----
+- Policies: 8 synthetic policies (all synthetic=true)
+    * 1 Medicare LCD-style policy (lumbar MRI, jurisdiction JK)
+    * 7 commercial policies for fictional payer "SampleCommercial" (jurisdiction national)
+- Chunks: 46 (split at each policy's section headings)
+- Embeddings: sentence-transformers/all-MiniLM-L6-v2 (384-dim)
+- Vector index: FAISS IndexFlatIP (cosine similarity on normalized vectors)
+- Reranking: cross-encoder/ms-marco-MiniLM-L-6-v2 (on by default)
+- Filters: payer, procedure code, jurisdiction (applied in code after ranking)
+- chunk_id format: policy_id::section_slug (cited by config/criteria_rules.yaml)
+
+Note on scores: with reranking on, scores are raw cross-encoder relevance scores,
+not percentages. They can be negative. Only the order matters.
+
+
+TEST 1: Medicare policy, procedure 72148 (lumbar MRI)
+------------------------------------------------------
+Command:
+  python src/rag/rag_pipeline.py demo   (query 1: payer=Medicare, procedure=72148)
+Query: "How many weeks of conservative treatment are needed before a lumbar MRI?"
+
+  #1  score=6.1589  medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+      section=Coverage Indications, Limitations, and/or Medical Necessity
+  #2  score=4.6441  medicare_lcd_lumbar_mri::red_flag_conditions
+      section=Red Flag Conditions
+
+Result: PASS. The correct section (6 weeks of conservative management) is #1,
+and the red-flag exception is #2.
+
+
+TEST 2: SampleCommercial policy, procedure 72148
+------------------------------------------------
+Command:
+  python src/rag/rag_pipeline.py demo   (query 3: payer=SampleCommercial, procedure=72148)
+Query: "What records must be sent with the prior authorization request?"
+
+  #1  score=-1.2836   commercial_lumbar_mri::precertification_requirements
+  #2  score=-10.9774  commercial_lumbar_mri::documentation_requirements
+
+Result: PARTIAL. The correct section (Documentation Requirements) is #2, not #1.
+This is the one question the reranker made worse: the phrase "prior authorization
+request" matches the Precertification section's topic. The correct answer is
+still in the top 3, which is why the agent reads the top 3 results.
+
+
+TEST 3: Region (jurisdiction) filter
+------------------------------------
+Command:
+  python src/rag/rag_pipeline.py query "MRI rules" --payer Medicare --jurisdiction JL
+
+Output:
+  (no matching chunks for those filters)
+
+Result: PASS. There is no Medicare policy for region JL, so the search returns
+nothing instead of region JK's rules. The agent should route an empty result to
+a human.
+
+
+TEST 4: chunk_id format
+-----------------------
+Command:
+  python src/rag/rag_pipeline.py build
+
+Sample chunk_ids produced:
+  medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity
+  medicare_lcd_lumbar_mri::red_flag_conditions
+  medicare_lcd_lumbar_mri::limitations
+  medicare_lcd_lumbar_mri::documentation_requirements
+  commercial_lumbar_mri::precertification_requirements
+  commercial_lumbar_mri::medical_necessity_criteria
+  commercial_lumbar_mri::documentation_requirements
+
+Result: PASS. All 46 chunk_ids follow policy_id::section_slug. Rekha's
+test_integration.py confirmed the retrieved chunk_id matches the cites_chunk
+value in criteria_rules.yaml.
+
+
+TEST 5: Method comparison (22 questions: 8 easy, 14 hard)
+---------------------------------------------------------
+Command:
+  python src/rag/rag_pipeline.py compare
+
+"Easy" questions reuse words from the policy text.
+"Hard" questions are reworded the way a clinician or staff member would ask.
+
+Method                       Section names   Easy @1  Easy @3  Hard @1  Hard @3   All @1   All @3
+Keyword (TF-IDF)             yes                 7/8      8/8     7/14    12/14    14/22    20/22
+Keyword (TF-IDF)             no                  7/8      8/8     5/14    12/14    12/22    20/22
+Embeddings (FAISS)           yes                 5/8      8/8    10/14    13/14    15/22    21/22
+Embeddings (FAISS)           no                  4/8      8/8     8/14    13/14    12/22    21/22
+Hybrid (both)                yes                 7/8      7/8     9/14    13/14    16/22    20/22
+Hybrid (both)                no                  7/8      7/8     9/14    13/14    16/22    20/22
+Embeddings (FAISS) + rerank  yes                 7/8      8/8    11/14    13/14    18/22    21/22
+Hybrid (both) + rerank       yes                 7/8      8/8    11/14    13/14    18/22    21/22
+
+Findings:
+- Keyword search is best when the question reuses the policy's wording;
+  embeddings are best on reworded questions.
+- Embeddings + rerank is best overall: 18/22 at #1, 21/22 in top 3.
+- Compared with plain embeddings, reranking fixed 4 questions and broke 1.
+- Section names help embeddings once policies share a common layout (15 vs 12).
+
+Still missed at #1 by the best method (4):
+  [easy] minimum duration of physical therapy or medication before imaging
+  [hard] What records must be sent with the prior authorization request?
+  [hard] She drops things and walks unsteadily, does she have to finish six weeks
+         of therapy before a neck scan?
+  [hard] What paperwork does the surgeon need to send for a knee replacement?
+
+
+LIMITATIONS
+-----------
+- Small test set (22 questions), written by the pipeline's author, so results are
+  directions, not proof. Next step: questions written blind by teammates.
+- All policies are synthetic. Real payer policies are under an AMA CPT license.
+- FAISS has no built-in metadata filtering; filters are applied after ranking.
