@@ -31,7 +31,8 @@ policies:
     payer: Medicare
     jurisdiction: JK  # example region; each MAC jurisdiction can have its own LCD
     document_type: LCD
-    procedure_codes: ["72148"]
+    # 72148 = without contrast, 72149 = with contrast, 72158 = without and with contrast
+    procedure_codes: ["72148", "72149", "72158"]
     synthetic: true   # set to false after replacing with a real downloaded LCD
     sections:
       - "Coverage Indications, Limitations, and/or Medical Necessity"
@@ -45,7 +46,8 @@ policies:
     payer: SampleCommercial
     jurisdiction: national
     document_type: Commercial clinical policy bulletin
-    procedure_codes: ["72148"]
+    # 72148 = without contrast, 72149 = with contrast, 72158 = without and with contrast
+    procedure_codes: ["72148", "72149", "72158"]
     synthetic: true
     sections: *commercial_sections
     skip_sections: *commercial_skip

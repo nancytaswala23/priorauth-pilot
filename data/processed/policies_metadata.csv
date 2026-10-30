@@ -1,0 +1,15 @@
+policy_id,payer_name,procedure_code,document_type,jurisdiction,synthetic,source_file,section_count
+medicare_lcd_lumbar_mri,Medicare,72148,LCD,JK,True,data/raw/policies/medicare_lcd_lumbar_mri_SYNTHETIC.txt,4
+commercial_lumbar_mri,SampleCommercial,72148,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_payer_lumbar_mri_SYNTHETIC.txt,6
+commercial_cervical_mri,SampleCommercial,72141,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_cervical_mri_SYNTHETIC.txt,6
+commercial_knee_mri,SampleCommercial,73721,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_knee_mri_SYNTHETIC.txt,6
+commercial_brain_mri,SampleCommercial,70551,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_brain_mri_SYNTHETIC.txt,6
+commercial_brain_mri,SampleCommercial,70553,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_brain_mri_SYNTHETIC.txt,6
+commercial_lumbar_esi,SampleCommercial,62323,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_lumbar_esi_SYNTHETIC.txt,6
+commercial_lumbar_esi,SampleCommercial,64483,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_lumbar_esi_SYNTHETIC.txt,6
+commercial_total_knee_arthroplasty,SampleCommercial,27447,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_total_knee_arthroplasty_SYNTHETIC.txt,6
+commercial_sleep_apnea,SampleCommercial,95806,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_sleep_apnea_SYNTHETIC.txt,6
+commercial_sleep_apnea,SampleCommercial,G0399,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_sleep_apnea_SYNTHETIC.txt,6
+commercial_sleep_apnea,SampleCommercial,95810,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_sleep_apnea_SYNTHETIC.txt,6
+commercial_sleep_apnea,SampleCommercial,95811,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_sleep_apnea_SYNTHETIC.txt,6
+commercial_sleep_apnea,SampleCommercial,E0601,Commercial clinical policy bulletin,national,True,data/raw/policies/commercial_sleep_apnea_SYNTHETIC.txt,6
