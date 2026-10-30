@@ -1,0 +1,36 @@
+SYNTHETIC SAMPLE - NOT ACTUAL CMS POLICY TEXT
+Written by the PriorAuthPilot team to mirror the structure of a Medicare
+Local Coverage Determination (LCD). Replace with a real LCD downloaded from
+the Medicare Coverage Database (cms.gov/medicare-coverage-database).
+
+Lumbar Spine MRI (CPT 72148: MRI lumbar spine without contrast)
+
+Coverage Indications, Limitations, and/or Medical Necessity
+MRI of the lumbar spine is considered reasonable and necessary when the
+patient has low back pain with radiculopathy (pain, numbness, or weakness
+radiating into the leg) that has persisted despite at least 6 weeks of
+documented conservative management, and the results of imaging are expected
+to change treatment, such as referral for surgery or epidural injection.
+
+Red Flag Conditions
+MRI may be performed without completing 6 weeks of conservative management
+when any of the following is suspected: cauda equina syndrome (new bladder or
+bowel dysfunction, saddle numbness), progressive or severe neurologic deficit,
+spinal infection (fever, IV drug use, immunosuppression), malignancy (history
+of cancer, unexplained weight loss), or vertebral fracture after significant
+trauma.
+
+Limitations
+MRI is not considered reasonable and necessary for uncomplicated acute low
+back pain of less than 6 weeks duration without red flag conditions. Routine
+screening imaging is not covered. Repeat lumbar MRI within 12 months is not
+covered unless there is a documented change in symptoms, new neurologic
+findings, or planned surgical intervention.
+
+Documentation Requirements
+The medical record must include the treating practitioner's history and
+physical examination, the duration and type of symptoms, the neurologic
+examination findings, and a description of conservative management attempted
+(for example physical therapy, anti-inflammatory medication, activity
+modification) with start and end dates. When a red flag condition is the
+reason for imaging, the specific red flag must be documented.

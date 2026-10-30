@@ -1,0 +1,58 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-005: Lumbar Epidural Steroid Injection
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members.
+
+Precertification Requirements
+Precertification is required for each lumbar epidural steroid injection
+session, including repeat injections. A single approval covers one session at
+the requested spinal level or levels.
+
+Medical Necessity Criteria
+The plan considers lumbar epidural steroid injection medically necessary when
+all of the following apply:
+1. Radicular pain extending into the leg, with imaging or examination findings
+   that match the affected nerve root.
+2. Pain has lasted at least 4 weeks despite conservative treatment and limits
+   daily function.
+3. The injection is performed with fluoroscopic or CT guidance.
+4. The member is participating in an active treatment program such as
+   physical therapy or a home exercise plan.
+A repeat injection is medically necessary only when the previous injection
+gave at least 50 percent pain relief lasting at least 3 months, up to 4
+sessions per spinal region in 12 months.
+
+Not Medically Necessary
+Epidural steroid injection is not medically necessary for back pain without
+radicular symptoms, when performed without imaging guidance, or as a fixed
+series scheduled in advance regardless of the member's response.
+
+Experimental, Investigational, or Unproven
+Intradiscal steroid injection and epidural injection of biologic agents for
+back pain are considered experimental and investigational.
+
+Documentation Requirements
+Submit pain scores before treatment, the spine imaging report, conservative
+treatments tried with dates, a functional assessment, and for repeat
+injections the percentage and duration of relief from the prior injection.
+
+Background
+Epidural steroids can shorten an episode of radicular pain but have not been
+shown to help back pain that does not radiate into the leg.
+
+Codes
+Procedure codes: 62323 (lumbar interlaminar epidural injection with imaging
+guidance); 64483 (lumbar transforaminal epidural injection, single level,
+with imaging guidance)
+ICD-10-CM examples: M54.16 lumbar radiculopathy; M54.17 lumbosacral
+radiculopathy; M51.16 lumbar disc disorder with radiculopathy; M48.062 lumbar
+spinal stenosis with neurogenic claudication. Codes are illustrative; verify
+against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.

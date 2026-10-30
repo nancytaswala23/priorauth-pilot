@@ -1,0 +1,56 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-003: Knee MRI
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members.
+
+Precertification Requirements
+Precertification is required for outpatient MRI of the knee. Weight-bearing
+knee X-rays must be completed before the MRI request is submitted, except when
+an acute ligament injury is suspected.
+
+Medical Necessity Criteria
+The plan considers knee MRI medically necessary when any one of the following
+applies:
+1. Suspected meniscal tear or ligament injury with mechanical symptoms such as
+   locking, catching, or giving way, or with positive examination tests, when
+   the result will guide a surgical decision.
+2. Persistent knee pain after at least 4 weeks of conservative treatment with
+   X-rays that do not explain the symptoms.
+3. Suspected osteonecrosis, occult fracture, or osteochondral lesion.
+4. Suspected infection or tumor involving the knee.
+
+Not Medically Necessary
+Knee MRI is not medically necessary when X-rays already show moderate or
+severe osteoarthritis that explains the symptoms, or as a routine step before
+planned knee replacement. MRI is also not medically necessary for knee pain
+without mechanical symptoms that has not been treated conservatively.
+
+Experimental, Investigational, or Unproven
+Quantitative cartilage mapping techniques, including T2 mapping and delayed
+gadolinium-enhanced cartilage imaging, are considered experimental and
+investigational.
+
+Documentation Requirements
+Submit the mechanism of injury if any, examination findings including special
+tests, weight-bearing X-ray results from the last 6 months, and the type and
+duration of conservative treatment.
+
+Background
+In advanced arthritis, X-rays usually provide the information needed for
+treatment planning. MRI is most useful when soft tissue injury is suspected or
+when X-rays do not account for the member's symptoms.
+
+Codes
+Procedure code: 73721 (lower extremity joint MRI without contrast)
+ICD-10-CM examples: M25.561 pain in right knee; M25.562 pain in left knee;
+S83.511A sprain of anterior cruciate ligament of right knee, initial
+encounter; M17.11 primary osteoarthritis, right knee. Codes are
+illustrative; verify against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.

@@ -1,0 +1,57 @@
+SYNTHETIC SAMPLE - NOT ACTUAL PAYER POLICY TEXT
+Fictional payer: Sample Commercial Health Plan. Written by the PriorAuthPilot
+team in its own words. The layout loosely follows the structure of publicly
+posted commercial clinical policy bulletins; no text was copied from any payer.
+Procedure codes are listed by number with plain-language labels only.
+
+Clinical Policy Bulletin SC-CPB-007: Obstructive Sleep Apnea Testing and CPAP
+Effective date: 01/01/2026   Next review: 01/01/2027
+Scope: Fully insured commercial HMO, PPO, and POS members aged 18 and older.
+
+Precertification Requirements
+Precertification is required for attended in-lab sleep studies and for CPAP
+devices. Home sleep apnea tests do not require precertification when ordered
+for an adult who meets the criteria in this policy.
+
+Medical Necessity Criteria
+A home sleep apnea test is the preferred first test for adults with symptoms
+of moderate to severe sleep apnea, such as loud snoring, witnessed pauses in
+breathing, or daytime sleepiness. An attended in-lab study is medically
+necessary when the member has significant heart or lung disease, a
+neuromuscular condition, a suspected sleep disorder other than obstructive
+apnea, a negative or inconclusive home test despite strong symptoms, or cannot
+complete a home test.
+CPAP is medically necessary when testing shows an apnea-hypopnea index of 15
+or more, or 5 to 14 with sleepiness, high blood pressure, heart disease, or
+prior stroke. Coverage continues after the first 90 days only if the device
+download shows use of at least 4 hours per night on 70 percent of nights
+during a 30-day period.
+
+Not Medically Necessary
+Sleep testing is not medically necessary for snoring alone without other
+symptoms, or for repeat testing without a change in symptoms, weight, or
+treatment.
+
+Experimental, Investigational, or Unproven
+Acoustic pharyngometry, and consumer wearables or smartphone applications used
+as the only diagnostic test, are considered experimental and investigational.
+
+Documentation Requirements
+Submit the Epworth Sleepiness Scale score, symptom history, relevant medical
+conditions, the sleep study report with the apnea-hypopnea index, and for
+continued CPAP coverage the device usage download.
+
+Background
+Untreated obstructive sleep apnea is linked to daytime sleepiness, motor
+vehicle crashes, and cardiovascular disease. CPAP works only when it is used
+regularly, which is why continued coverage depends on usage data.
+
+Codes
+Procedure codes: 95806 and G0399 (home sleep apnea testing); 95810 (attended
+polysomnography); 95811 (attended polysomnography with CPAP titration);
+E0601 (CPAP device)
+ICD-10-CM examples: G47.33 obstructive sleep apnea; R06.83 snoring. Codes are
+illustrative; verify against current code sets.
+
+Policy History
+01/01/2026 New synthetic policy created for PriorAuthPilot testing.
