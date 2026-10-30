@@ -528,6 +528,76 @@ def cmd_compare(args):
             print(f"    - [{r['difficulty']}] {r['question']}")
 
 
+# --------------------------------------------------------- verify-citations
+RULES_PATH = REPO_ROOT / "config" / "criteria_rules.yaml"
+ICD_CODE = re.compile(r"\b[A-Z][0-9]{2}\.[0-9A-Z]{1,4}\b")
+
+
+def _collect_citations(node, rule=None, found=None):
+    """Walk criteria_rules.yaml whatever its layout and collect every
+    *cites_chunk value together with the rule it belongs to."""
+    found = [] if found is None else found
+    if isinstance(node, dict):
+        rule = node.get("rule", rule)
+        for key, value in node.items():
+            if key.endswith("cites_chunk"):
+                for cid in (value if isinstance(value, list) else [value]):
+                    found.append((str(rule), key, str(cid)))
+            else:
+                _collect_citations(value, rule, found)
+    elif isinstance(node, list):
+        for item in node:
+            _collect_citations(item, rule, found)
+    return found
+
+
+def cmd_verify_citations(args):
+    path = Path(args.rules)
+    if not path.exists():
+        sys.exit(f"ERROR: rules file not found: {path}")
+    with open(path, encoding="utf-8") as f:
+        rules_yaml = yaml.safe_load(f)
+
+    chunks = {c["chunk_id"]: c for c in build_chunks(load_config(), warn=False)}
+    citations = _collect_citations(rules_yaml)
+    if not citations:
+        sys.exit("ERROR: no cites_chunk values found in the rules file.")
+
+    print(f"Checking {len(citations)} citation(s) in {path.name} against "
+          f"{len(chunks)} policy chunks\n")
+
+    # Check 1: does every cited chunk exist?
+    missing = 0
+    for rule, key, cid in citations:
+        ok = cid in chunks
+        missing += not ok
+        print(f"  {'PASS' if ok else 'FAIL'}  {cid}")
+        print(f"        {key} of rule: {rule}")
+
+    # Check 2 (heuristic): diagnosis codes and numbers in a rule
+    # should appear in at least one of the sections it cites.
+    print("\nSupport check (heuristic: codes and numbers in each rule vs. cited text):")
+    by_rule = {}
+    for rule, _, cid in citations:
+        by_rule.setdefault(rule, []).append(cid)
+    warnings = 0
+    for rule, cids in by_rule.items():
+        text = " ".join(chunks[c]["text"] for c in cids if c in chunks)
+        terms = ICD_CODE.findall(rule) + re.findall(r"(?<![\w.])\d+(?![\w.])", rule)
+        unsupported = [t for t in terms if t not in text]
+        if unsupported:
+            warnings += 1
+            print(f"  WARN  rule: {rule}")
+            print(f"        not found in cited text: {', '.join(unsupported)}")
+        else:
+            print(f"  OK    rule: {rule}")
+
+    print(f"\nResult: {len(citations) - missing}/{len(citations)} citations exist, "
+          f"{warnings} rule(s) with unsupported terms")
+    if missing:
+        sys.exit(1)
+
+
 # -------------------------------------------------------------------- main
 
 def main():
@@ -559,9 +629,14 @@ def main():
     c = sub.add_parser("compare", help="compare keyword vs embeddings, with and without section names")
     c.add_argument("-k", type=int, default=3)
 
+    v = sub.add_parser("verify-citations",
+                       help="check that criteria_rules.yaml cites real chunks that support each rule")
+    v.add_argument("--rules", default=str(RULES_PATH), help="path to criteria_rules.yaml")
+
     args = parser.parse_args()
     {"build": cmd_build, "query": cmd_query, "demo": cmd_demo,
-     "eval": cmd_eval, "compare": cmd_compare}[args.command](args)
+     "eval": cmd_eval, "compare": cmd_compare,
+     "verify-citations": cmd_verify_citations}[args.command](args)
 
 
 if __name__ == "__main__":
