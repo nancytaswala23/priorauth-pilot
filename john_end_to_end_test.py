@@ -4,7 +4,8 @@ test for John (P1000).
 
 This runs ALL 7 steps for real: a real call into Yashasvi's rag_pipeline.py
 (Step 2), and the real config/criteria_rules.yaml (Step 3) -- not a
-hand-trace. Nancy's Server 1 (Step 1) is simulated, same as in
+hand-trace. Nancy's warehouse (Step 1) is live, but this script's query
+layer isn't wired to it yet -- same as in
 test_integration.py, since it isn't built/wired up yet.
 
 NOTE on John's payer: the workplans call him an "Aetna" patient, but no
@@ -48,7 +49,7 @@ def check(label, condition):
 
 
 # ---------------------------------------------------------------- STEP 1
-section("STEP 1: Ingest Case  (Nancy's Server 1 -- SIMULATED, no live Snowflake here)")
+section("STEP 1: Ingest Case  (Nancy's data IS live in Snowflake now; this script's query layer is not wired to it yet)")
 
 john_claims_data = {
     "conservative_treatment_weeks": 2,
@@ -160,4 +161,5 @@ if FAIL:
 else:
     print("\nPASS -- John's (P1000) full 7-step flow ran end to end using REAL")
     print("components: a real Yashasvi RAG retrieval, the real criteria_rules.yaml,")
-    print("and a correctly-terminology'd agent assessment. Server 1 was simulated.")
+    print("and a correctly-terminology'd agent assessment. Nancy's warehouse is live;")
+    print("this script's query layer just isn't wired to it yet.")
