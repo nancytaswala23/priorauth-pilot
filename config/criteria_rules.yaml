@@ -71,7 +71,7 @@ procedures:
 
       - rule: "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present"
         source: "DIM_DIAGNOSES"  # BOTH halves of this rule trace here: diagnosis_codes directly, AND red_flag_present (also derived from diagnosis_code, per Nancy) -- not PA_CLAIMS
-        basis: "policy"
+        basis: "policy_with_code_translation"  # policy says "radiculopathy" in plain language; we translated that into 3 real ICD-10 codes -- verify-citations now shows this as NOTE, not WARN
         cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base radiculopathy requirement
           - "medicare_lcd_lumbar_mri::red_flag_conditions"  # exception: red flags don't require a confirmed diagnosis code yet
@@ -129,3 +129,41 @@ procedures:
 
     decision_logic: "ALL_RULES_MUST_PASS"
     approval_threshold: 0.95
+
+# =============================================================================
+# OPEN ITEMS (from Yashasvi's review of Nancy's real data, not yet resolved)
+# =============================================================================
+#
+# 1. conservative_treatment_weeks and red_flag_present do not exist anywhere
+#    in Nancy's real data yet (Yashasvi checked directly). test_integration.py
+#    and the john_*_test.py scripts only pass because they use hardcoded
+#    test patients, not real queried data -- this is already known and
+#    intentional for Saturday's demo, but it means these rules genuinely
+#    CANNOT run against real data yet. Yashasvi has asked Nancy to add both
+#    columns. Once added, re-check whether the "derived/computed" framing
+#    above still applies, or whether they become real, directly-queryable
+#    columns instead.
+#
+# 2. diagnosis_codes (plural, a list) vs. Nancy's real diagnosis_code
+#    (singular, one per claim row) -- a patient's full diagnosis history has
+#    to be collected across their claim rows into a list before this rule
+#    can run. NOT YET ASSIGNED: open question for the team on whether this
+#    aggregation belongs in Nancy's dbt layer (most natural fit, since it's
+#    a data transformation) or elsewhere. Needs a decision, not yet decided.
+#
+# 3. (Yashasvi's blind-test finding) Search is weakest on "what documents are
+#    needed" questions. Since each rule's cites_chunk already identifies the
+#    exact documentation-requirements chunk for THIS procedure's Medicare
+#    policy, a documentation check should fetch that chunk_id directly
+#    rather than semantically searching for it -- search should be reserved
+#    for genuinely free-text questions. Not yet implemented (no evaluator
+#    exists yet to wire this into) -- see docs/mcp_design.md.
+#
+# 4. (Yashasvi's suggestion) Right now, decision_logic treats a failed
+#    "policy" rule and a failed "team_assumption" rule identically -- both
+#    produce DOES_NOT_MEET_CRITERIA. Since a team_assumption isn't backed by
+#    any real payer requirement, failing ONLY that kind of rule arguably
+#    shouldn't carry the same weight as failing a real policy rule -- it
+#    could route to human review instead. NOT YET IMPLEMENTED: this is a
+#    real behavior change to decision_logic, and shouldn't be made silently
+#    this close to presenting. Needs explicit team sign-off first.

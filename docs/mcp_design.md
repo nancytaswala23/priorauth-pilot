@@ -84,6 +84,13 @@ directly instead of bundling everything behind one API.
   California → JE, not yet loaded), the search correctly returns nothing
   rather than matching a wrong region's policy — that case is routed to a
   human instead of auto-evaluated against the wrong rules.
+- **Search vs. direct lookup (from Yashasvi's blind test):** retrieval is
+  weakest on "what documents are needed" questions. Since each rule in
+  `criteria_rules.yaml` already names its exact `cites_chunk`, a
+  documentation check should fetch that chunk_id directly rather than
+  semantically searching for it — search should be reserved for genuinely
+  free-text questions, not things the rules already know the answer to.
+  Not implemented yet (no evaluator exists to wire this into).
 - **Known coverage gap:** 11 of 50 real-world test questions (appeals,
   referrals, durable medical equipment/supplies) aren't answered by any
   loaded policy yet. Not yet handled: a case touching one of these should
