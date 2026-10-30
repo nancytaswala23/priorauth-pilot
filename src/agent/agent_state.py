@@ -43,6 +43,7 @@ class PolicyReference:
     section: str
     text: str
     source_file: str
+    score: Optional[float] = None  # retrieval relevance score from Yashasvi's search() -- always real when built from a live search
     effective_date: Optional[str] = None  # NOT currently produced by the real pipeline -- always None for now
 
     @property
