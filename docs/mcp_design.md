@@ -13,17 +13,29 @@ directly instead of bundling everything behind one API.
 
 ## Server 1 — Claims & Patient Data
 
-- **Backed by:** Snowflake (`src/data_pipeline/snowflake_schema.sql`)
-- **Tables queried:** `PATIENTS`, `CLAIMS`
+- **Backed by:** a live Snowflake star schema — fact table `PA_CLAIMS`
+  (295 claims) with 5 dimensions: `PATIENTS`, `PROCEDURES`, `DIAGNOSES`,
+  `POLICIES`, `DECISIONS`. 100 synthetic patients and 295 synthetic claims
+  are actually loaded, not simulated data.
+- **Status, precisely:** the warehouse itself is real and live. The agent's
+  query layer is NOT yet wired to it — `AgentState` construction still uses
+  a hardcoded stand-in dictionary (`simulated_claims_lookup` in the test
+  scripts) rather than a real query against `PA_CLAIMS`. "Server 1 is
+  simulated" is no longer accurate; "the data is live, the agent doesn't
+  query it yet" is.
+- **Table/column mapping below is TENTATIVE** — written from the dimension
+  *names* Nancy reported, not from her actual column-level SQL. Needs
+  confirmation before `criteria_rules.yaml`'s `source` fields are updated
+  to match (see open item at the bottom of this file).
 - **What it does:** given a `patient_id`, returns demographics (age, gender,
-  state) and claim history (diagnosis code(s), procedure code, date of
-  service)
+  state) from `PATIENTS`, and claim history from `PA_CLAIMS` joined to
+  `DIAGNOSES` and `PROCEDURES`.
 - **Endpoints:**
   - `get_patient(patient_id)` → demographics (age, gender, state)
   - `get_claims(patient_id)` → claim history (diagnosis codes, procedure code, date of service)
   - `get_conservative_treatment(patient_id)` → weeks of documented conservative treatment
 - **Called during:** Step 1 (Ingest Case) and Step 3 (Evaluate Criteria, for
-  any rule whose `source` is `CLAIMS` or `PATIENTS`)
+  any rule whose `source` references this server's tables)
 
 ## Server 2 — Policy Knowledge (RAG)
 
@@ -65,6 +77,18 @@ directly instead of bundling everything behind one API.
   - `get_policy_metadata(policy_id)` → the full standardized record (payer, document_type, jurisdiction, procedure_codes, synthetic)
 - **Called during:** Step 2 (Retrieve Policy), and again during Step 7 if an
   appeal needs to cite policy language directly.
+- **Where `jurisdiction` actually comes from:** patient state maps to a real
+  Medicare Administrative Contractor region (e.g. Massachusetts → JK — this
+  is why John/P001's test cases use `jurisdiction="JK"`, not an arbitrary
+  value). If a patient's state has no loaded policy for its region (e.g.
+  California → JE, not yet loaded), the search correctly returns nothing
+  rather than matching a wrong region's policy — that case is routed to a
+  human instead of auto-evaluated against the wrong rules.
+- **Known coverage gap:** 11 of 50 real-world test questions (appeals,
+  referrals, durable medical equipment/supplies) aren't answered by any
+  loaded policy yet. Not yet handled: a case touching one of these should
+  resolve to an explicit "not covered by any loaded policy" outcome rather
+  than silently matching the nearest unrelated chunk.
 
 ## Server 3 — Submission & Tracking
 
@@ -106,3 +130,20 @@ Every node in the LangGraph graph reads from and writes to the same
 end to end:
 
 **Patient data (Nancy) + Policies (Yashasvi) → Agent (Rekha) → Decision.**
+
+## Open items carried forward (not yet resolved)
+
+- **Audit trail now has a real home.** Nancy's star schema includes a
+  `DECISIONS` dimension table. We've described "every decision logged with
+  reasoning" as a benefit since the first slide deck, but never had a
+  concrete place to write it. Writing `AgentState.decision`,
+  `applicable_policy.chunk_id`, and the rules that passed/failed into
+  `DECISIONS` after Step 4 is the natural next integration step — not done
+  yet, just newly possible.
+- **`criteria_rules.yaml`'s `source` fields need confirming against Nancy's
+  real schema.** They currently say `CLAIMS` and `PATIENTS` (a flat model).
+  Her real schema has a `PA_CLAIMS` fact table and a *separate* `DIAGNOSES`
+  dimension — meaning the diagnosis-code rule's source may need to become
+  `DIAGNOSES`, not `CLAIMS`, and `CLAIMS` itself may need to become
+  `PA_CLAIMS`. Exact column names haven't been confirmed, so this hasn't
+  been changed yet — see message to Nancy below.

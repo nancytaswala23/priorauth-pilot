@@ -50,7 +50,7 @@ def check(label, condition):
 
 
 # ---------------------------------------------------------------- STEP 1
-section("STEP 1: Ingest Case  (Nancy's Server 1 -- SIMULATED, no live Snowflake here)")
+section("STEP 1: Ingest Case  (Nancy's data IS live in Snowflake now; this script's query layer is not wired to it yet)")
 
 # Shaped exactly like Nancy's real CLAIMS table columns. In the real system,
 # Server 1 would compute conservative_treatment_weeks from multiple CLAIMS
@@ -223,6 +223,6 @@ else:
     print("PASS -- Yashasvi's real RAG output plugs directly into your")
     print("AgentState/PolicyReference with zero manual translation, and the")
     print("retrieved chunk matches what criteria_rules.yaml already claims.")
-    print("Nancy's Server 1 is SIMULATED in this test -- it is NOT built or")
-    print("wired up yet. simulated_claims_lookup stands in for a real call;")
-    print("replace it once a real Server 1 query endpoint exists.")
+    print("Nancy's data warehouse IS live (100 patients, 295 claims in Snowflake) --")
+    print("this test's query layer just isn't wired to it yet. simulated_claims_lookup")
+    print("stands in for a real query against PA_CLAIMS; that wiring is the next step.")
