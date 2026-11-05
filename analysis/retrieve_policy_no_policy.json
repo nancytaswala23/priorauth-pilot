@@ -1,0 +1,12 @@
+{
+  "found": false,
+  "procedure_code": "72148",
+  "payer": "Medicare",
+  "state": "CA",
+  "patient_region": "JE",
+  "jurisdiction": "JE",
+  "policy_id": null,
+  "synthetic": null,
+  "sections": [],
+  "message": "No Medicare policy for procedure 72148 in region JE. Route to human review."
+}
