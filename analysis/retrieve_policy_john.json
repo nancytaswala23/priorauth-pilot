@@ -1,0 +1,37 @@
+{
+  "found": true,
+  "procedure_code": "72149",
+  "payer": "SampleCommercial",
+  "state": "CA",
+  "patient_region": "JE",
+  "jurisdiction": "national",
+  "policy_id": "commercial_lumbar_mri",
+  "synthetic": true,
+  "sections": [
+    {
+      "chunk_id": "commercial_lumbar_mri::medical_necessity_criteria",
+      "section": "Medical Necessity Criteria",
+      "text": "The plan considers lumbar spine MRI medically necessary when any one of the following applies: 1. Low back pain with or without radiculopathy that persists after at least 6 weeks of provider-directed conservative treatment within the past 6 months (physical therapy, chiropractic care, or prescribed medication), and the member is a candidate for surgery or interventional treatment. 2. A red flag condition is present: suspected cauda equina syndrome, progressive neurologic deficit, suspected infection, suspected malignancy, or suspected fracture. 3. Pre-operative planning for a scheduled lumbar spine surgery.",
+      "score": null
+    },
+    {
+      "chunk_id": "commercial_lumbar_mri::not_medically_necessary",
+      "section": "Not Medically Necessary",
+      "text": "The plan considers lumbar spine MRI not medically necessary for acute low back pain present for less than 6 weeks without red flag conditions, for screening in members without symptoms, or when the results would not change management. Repeat MRI within 12 months is not medically necessary unless symptoms or neurologic findings have changed.",
+      "score": null
+    },
+    {
+      "chunk_id": "commercial_lumbar_mri::precertification_requirements",
+      "section": "Precertification Requirements",
+      "text": "Precertification is required for outpatient lumbar spine MRI. The ordering provider must submit the request before the service is performed. Requests submitted after the service date are reviewed as retrospective requests and may be denied for lack of authorization. Imaging performed in the emergency department or during an inpatient stay does not require separate precertification.",
+      "score": null
+    },
+    {
+      "chunk_id": "commercial_lumbar_mri::documentation_requirements",
+      "section": "Documentation Requirements",
+      "text": "Submit clinical notes from the last 60 days documenting symptom onset and duration, physical and neurologic exam findings, type and dates of conservative treatment and the member's response, and any red flag findings.",
+      "score": null
+    }
+  ],
+  "message": "Main policy sections (direct lookup by chunk ID, no search score)."
+}
