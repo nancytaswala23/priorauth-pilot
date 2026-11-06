@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="#0B3C49"/>
+  <!-- document -->
+  <path d="M74 52 h76 l38 38 v100 a14 14 0 0 1 -14 14 h-100 a14 14 0 0 1 -14 -14 v-124 a14 14 0 0 1 14 -14 z"
+        fill="#FFFFFF"/>
+  <path d="M150 52 v26 a12 12 0 0 0 12 12 h26 z" fill="#B8C4C9"/>
+  <rect x="84" y="104" width="64" height="10" rx="5" fill="#7FC8BF"/>
+  <rect x="84" y="126" width="80" height="10" rx="5" fill="#B8C4C9"/>
+  <rect x="84" y="148" width="52" height="10" rx="5" fill="#B8C4C9"/>
+  <!-- check badge -->
+  <circle cx="178" cy="182" r="40" fill="#0E9F8E" stroke="#0B3C49" stroke-width="8"/>
+  <path d="M159 182 l13 13 l26 -27" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

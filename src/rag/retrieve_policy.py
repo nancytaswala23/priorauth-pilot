@@ -75,15 +75,21 @@ def retrieve_policy(procedure_code, payer, state, question=None):
     state = (state or "").strip().upper()
     jurisdiction = jurisdiction_for_state(state) if state else None
     result = {"found": False, "procedure_code": procedure_code, "payer": payer,
-                "state": state, "patient_region": jurisdiction,
-              "jurisdiction": None, "policy_id": None,
+              "state": state, "patient_region": jurisdiction,
+              "jurisdiction": jurisdiction, "policy_id": None,
               "synthetic": None, "sections": [], "message": ""}
 
     policy = _find_policy(procedure_code, payer, jurisdiction)
     if policy is None:
-        where = f" in region {jurisdiction}" if (payer.lower() == "medicare" and jurisdiction) else ""
-        result["message"] = (f"No {payer} policy for procedure {procedure_code}{where}. "
-                             f"Route to human review.")
+        in_library = any(str(procedure_code) in [str(c) for c in (p.get("procedure_codes") or [p["procedure_code"]])]
+                         for p in load_config()["policies"])
+        if not in_library:
+            result["message"] = (f"Procedure {procedure_code} is not in our policy library "
+                                 f"(it may not require prior authorization).")
+        else:
+            where = f" in region {jurisdiction}" if (payer.lower() == "medicare" and jurisdiction) else ""
+            result["message"] = (f"No {payer} policy for procedure {procedure_code}{where}. "
+                                 f"Route to human review.")
         return result
 
     # jurisdiction = where the POLICY applies ("JK" or "national");
