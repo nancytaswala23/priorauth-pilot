@@ -75,8 +75,8 @@ def retrieve_policy(procedure_code, payer, state, question=None):
     state = (state or "").strip().upper()
     jurisdiction = jurisdiction_for_state(state) if state else None
     result = {"found": False, "procedure_code": procedure_code, "payer": payer,
-              "state": state, "patient_region": jurisdiction,
-              "jurisdiction": jurisdiction, "policy_id": None,
+                "state": state, "patient_region": jurisdiction,
+              "jurisdiction": None, "policy_id": None,
               "synthetic": None, "sections": [], "message": ""}
 
     policy = _find_policy(procedure_code, payer, jurisdiction)
