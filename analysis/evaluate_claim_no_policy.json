@@ -36,7 +36,7 @@
     "payer": "Medicare",
     "state": "CA",
     "patient_region": "JE",
-    "jurisdiction": "JE",
+    "jurisdiction": null,
     "policy_id": null,
     "synthetic": null,
     "sections": [],
