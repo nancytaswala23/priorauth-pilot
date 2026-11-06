@@ -109,7 +109,7 @@ def render_data_panel():
         with col2:
             st.write(f"**Diagnosis Code:** {claim_details[3]}")
             st.write(f"**Conservative Treatment Weeks:** {claim_details[4]}")
-            st.write(f"**Red Flag Present:** {'✅ YES' if claim_details[5] == 'TRUE' else '❌ NO'}")
+            st.write(f"**Red Flag Present:** {'✅ YES' if claim_details[5] else '❌ NO'}")
     else:
         st.error(f"Claim {claim_id} not found")
         return None
@@ -118,4 +118,3 @@ def render_data_panel():
 
 if __name__ == "__main__":
     render_data_panel()
-    
