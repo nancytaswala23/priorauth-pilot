@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from src.ui.data_panel import render_data_panel, load_duckdb, get_claim_details, get_patient_info
-from src.rag.retrieve_policy import retrieve_policy, load_search_models
+from src.rag.retrieve_policy import retrieve_policy
 from src.agent.evaluate_claim import evaluate_claim
 
 # Page configuration
@@ -38,14 +38,8 @@ if 'policy_data' not in st.session_state:
 if 'evaluation_data' not in st.session_state:
     st.session_state.evaluation_data = None
 
-# Load models once
-@st.cache_resource
-def load_models():
-    """Load FAISS models once at startup"""
-    load_search_models()
-    return True
 
-models_loaded = load_models()
+
 
 # ============================================================================
 # SIDEBAR
@@ -342,3 +336,4 @@ st.markdown("""
     <p>Data sourced from Snowflake via DuckDB • RAG via FAISS • Agent via Rule Engine</p>
 </div>
 """, unsafe_allow_html=True)
+
