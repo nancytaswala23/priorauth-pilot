@@ -17,7 +17,7 @@ PriorAuthPilot is an intelligent automation system that uses agentic AI, retriev
 - Coverage criteria are **fragmented and constantly changing**:
   - National Coverage Determinations (NCDs) - Medicare-wide rules
   - Local Coverage Determinations (LCDs) - Regional variations by MAC
-  - Private Payer Policies - Separate PDFs for Aetna, UnitedHealthcare, Cigna, etc.
+  - Private Payer Policies - Each commercial insurer publishes its own separate document with its own structure (this project uses one fictional payer, SampleCommercial)
 - **No standardized access** - Staff must manually navigate different policy documents
 - **Denials are common** - Lack of policy knowledge leads to improper submissions
 
@@ -151,7 +151,7 @@ Prior authorization is a critical bottleneck in healthcare delivery. Clinicians 
 ### 2. Insurance Policies
 
 - **Medicare-style & commercial-style policies**, written in-house as fully synthetic documents
-  - Real Medicare/Aetna pages were used only as a structural reference
+  - Real Medicare and commercial payer pages were used only as a structural reference
   - This avoids reusing AMA-licensed CPT code language from real coverage documents in a pipeline whose repo may go public — see `docs/mcp_design.md`
 
 ### 3. Denial Reason Codes
@@ -169,6 +169,25 @@ Prior authorization is a critical bottleneck in healthcare delivery. Clinicians 
 
 ---
 
+## How to run the demo app
+
+All data and policies are synthetic. The agent assesses; only the insurer approves or denies.
+
+```bash
+python3 -m pip install -r requirements.txt   # first run downloads ~180 MB of search models
+python3 setup_duckdb.py                      # builds priorauth.duckdb from the CSVs (safe to re-run)
+python3 add_procedures.py                    # adds the procedures table (safe to re-run)
+python3 -m streamlit run app.py              # opens http://localhost:8501
+```
+
+Check everything before a demo (stop the app first, it locks the database file):
+
+```bash
+python3 preflight_check.py
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -178,8 +197,8 @@ priorauth-pilot/
 │
 ├── data/
 │   └── raw/policies/                  # Synthetic insurance policies
-│       ├── medicare_ncd_sample.txt
-│       └── aetna_sample.pdf
+│       ├── medicare_lcd_lumbar_mri_SYNTHETIC.txt
+│       └── commercial_*_SYNTHETIC.txt   # 7 SampleCommercial policies (fictional payer)
 │
 ├── src/
 │   ├── data_pipeline/
@@ -194,7 +213,7 @@ priorauth-pilot/
 │
 ├── config/
 │   ├── chunking_strategy.yaml         # How to chunk policies
-│   └── criteria_rules.yaml            # Deterministic approval rules
+│   └── criteria_rules.yaml            # Deterministic criteria rules
 │
 └── docs/
     ├── snowflake_schema.md            # Schema documentation
@@ -238,7 +257,7 @@ Stores medical claims, diagnoses, and procedures.
 ```sql
 CREATE TABLE POLICIES (
   policy_id STRING PRIMARY KEY,
-  payer_name STRING,            -- Medicare, Aetna, etc.
+  payer_name STRING,            -- Medicare, SampleCommercial (fictional)
   procedure_code STRING,        -- HCPCS code
   coverage_text STRING          -- Policy language
 );

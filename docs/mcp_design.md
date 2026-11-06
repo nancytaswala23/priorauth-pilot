@@ -17,12 +17,14 @@ directly instead of bundling everything behind one API.
   (295 claims) with 5 dimensions: `PATIENTS`, `PROCEDURES`, `DIAGNOSES`,
   `POLICIES`, `DECISIONS`. 100 synthetic patients and 295 synthetic claims
   are actually loaded, not simulated data.
-- **Status, precisely:** the warehouse itself is real and live. The agent's
-  query layer is NOT yet wired to it — `AgentState` construction still uses
-  a hardcoded stand-in dictionary (`simulated_claims_lookup` in the test
-  scripts) rather than a real query against `PA_CLAIMS`. "Server 1 is
-  simulated" is no longer accurate; "the data is live, the agent doesn't
-  query it yet" is.
+- **Status, precisely (updated Nov 6):** Snowflake is the system of record.
+  For the demo, a local DuckDB export of it (`priorauth.duckdb`: tables
+  `patients`, `claims`, `policies`, `procedures`) is what the agent reads.
+  `evaluate_claim()` in `src/agent/evaluate_claim.py` queries it directly
+  (`claims` joined to `patients`, plus the patient's earlier diagnosis codes).
+  This is a direct function call, not yet a running MCP server: the MCP
+  design below is the production architecture. The old
+  `simulated_claims_lookup` dictionary is only used by the earlier test scripts.
 - **Table/column mapping below is TENTATIVE** — written from the dimension
   *names* Nancy reported, not from her actual column-level SQL. Needs
   confirmation before `criteria_rules.yaml`'s `source` fields are updated
@@ -45,7 +47,7 @@ directly instead of bundling everything behind one API.
 - **All policy content is synthetic (`synthetic: true` on every document).**
   This is a deliberate scoping decision, not an oversight: the CPT procedure
   codes embedded in real Medicare LCD/NCD documents *and* real private payer
-  bulletins (e.g. Aetna's Clinical Policy Bulletins) are licensed by the AMA
+  bulletins (from real commercial insurers) are licensed by the AMA
   for personal viewing only — not for the copying, derivative use, and
   redistribution a public RAG pipeline and GitHub repo would involve. We use
   real payer pages only as a structural reference, and write every policy
@@ -120,7 +122,7 @@ directly instead of bundling everything behind one API.
 
 ## How the agent ties these together
 
-**Concrete example:** a case arrives for Patient P001, lumbar MRI (72148), Medicare. The agent calls Server 1 for P001's claim history, Server 2 for the applicable NCD/LCD, evaluates `config/criteria_rules.yaml` against both, and either approves, requests documentation, or denies — logging the outcome through Server 3.
+**Concrete example:** a case arrives for Patient P001, lumbar MRI (72148), Medicare. The agent calls Server 1 for P001's claim history, Server 2 for the applicable NCD/LCD, evaluates `config/criteria_rules.yaml` against both, and assesses the case as `MEETS_CRITERIA`, `NEEDS_DOCS` or `DOES_NOT_MEET_CRITERIA` — routing it to submission, a documentation request or a human reviewer. Only the insurer (Server 3, simulated) approves or denies.
 
 | Step | Action | Server called |
 |---|---|---|

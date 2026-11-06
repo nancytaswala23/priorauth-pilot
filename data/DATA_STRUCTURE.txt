@@ -1,34 +1,44 @@
 PRIORAUTH PILOT - DATA STRUCTURE
 ===============================================================
+All data is SYNTHETIC. Snowflake is the warehouse; the demo reads a local
+DuckDB copy (priorauth.duckdb, built by setup_duckdb.py + add_procedures.py).
+Payers: Medicare, SampleCommercial (a fictional commercial insurer).
 
-PATIENTS TABLE (Dimension)
+PATIENTS TABLE (Dimension) - 100 rows
 Columns:
   patient_id       VARCHAR(20)    Primary Key - P1000, P1001, etc
   age              INT            18-85
   gender           VARCHAR(1)     M or F
   state            VARCHAR(2)     CA, NY, TX, etc
-  insurance        VARCHAR(50)    Aetna, Medicare, etc
+  insurance        VARCHAR(50)    Medicare or SampleCommercial
   created_at       TIMESTAMP      Record creation time
 
-CLAIMS TABLE (Fact)
+CLAIMS TABLE (Fact) - 313 rows
 Columns:
-  claim_id         VARCHAR(20)    Primary Key - C10000, C10001, etc
-  patient_id       VARCHAR(20)    Foreign Key → PATIENTS
-  procedure_code   VARCHAR(10)    HCPCS code - 72148 (MRI)
-  diagnosis_code   VARCHAR(10)    ICD-10 code - M51.26
-  date_of_service  DATE           Service date
-  created_at       TIMESTAMP      Claim received date
+  claim_id                      VARCHAR(20)   Primary Key - C10000, C10001, etc
+  patient_id                    VARCHAR(20)   Foreign Key -> PATIENTS
+  procedure_code                BIGINT        72148 / 72149 / 72158 (lumbar MRI), 99213 / 99214 (office visits)
+  diagnosis_code                VARCHAR(10)   ICD-10 code - one code per claim row, e.g. M54.16
+  date_of_service               DATE          Service date
+  conservative_treatment_weeks  BIGINT        2-12, synthetic (randomly assigned per claim)
+  red_flag_present              BOOLEAN       synthetic (assigned per patient, not derived from diagnosis)
+  created_at                    TIMESTAMP     Claim received date
 
-PROCEDURES TABLE (Dimension)
+PROCEDURES TABLE (Dimension) - 5 rows, created by add_procedures.py
 Columns:
-  procedure_code        VARCHAR(10)    Primary Key
-  procedure_name        VARCHAR(100)   Full name
-  cost                  DECIMAL(10,2)  Cost
-  requires_prior_auth   VARCHAR(3)     Yes/No
+  procedure_code   VARCHAR(10)    Primary Key
+  procedure_name   VARCHAR(100)   Full name
+  cost             INT            Cost
 
-POLICIES TABLE (Dimension)
+POLICIES TABLE (Dimension) - 14 rows, from data/processed/policies_metadata.csv
+One row per policy + procedure code (8 policies). The policy TEXT is not in this
+table: it lives in data/raw/policies/*_SYNTHETIC.txt and is searched by the RAG pipeline.
 Columns:
-  policy_id         VARCHAR(20)    Primary Key
-  payer_name        VARCHAR(50)    Aetna, Medicare, etc
-  procedure_code    VARCHAR(10)    HCPCS code
-  coverage_text     TEXT           Full policy text
+  policy_id        VARCHAR        e.g. medicare_lcd_lumbar_mri (with procedure_code, the key)
+  payer_name       VARCHAR(50)    Medicare or SampleCommercial
+  procedure_code   VARCHAR(10)    CPT/HCPCS code the policy covers
+  document_type    VARCHAR        LCD or Commercial clinical policy bulletin
+  jurisdiction     VARCHAR        JK (Medicare region) or national
+  synthetic        BOOLEAN        True for every policy in this project
+  source_file      VARCHAR        path to the policy text file
+  section_count    INT            number of indexed sections

@@ -1,0 +1,113 @@
+{
+  "claim_id": "C10001",
+  "patient_id": "P1000",
+  "procedure_code": "72149",
+  "payer": "SampleCommercial",
+  "state": "CA",
+  "inputs": {
+    "patient_age": 55,
+    "diagnosis_codes": [
+      "M42.90",
+      "M47.91",
+      "M51.16",
+      "M53.0"
+    ],
+    "conservative_treatment_weeks": 3,
+    "red_flag_present": false
+  },
+  "rules": [
+    {
+      "rule_id": "r1_conservative_or_red_flag",
+      "rule": "conservative_treatment_weeks >= 6 or red_flag_present",
+      "basis": "policy",
+      "result": "FAIL",
+      "via": null,
+      "observed": "3 weeks of conservative treatment; red flag: no",
+      "cites_chunk": [
+        "commercial_lumbar_mri::medical_necessity_criteria"
+      ],
+      "citations_in_policy": true
+    },
+    {
+      "rule_id": "r3_adult_age",
+      "rule": "patient_age >= 18",
+      "basis": "team_assumption",
+      "result": "PASS",
+      "via": null,
+      "observed": "age 55",
+      "cites_chunk": [],
+      "citations_in_policy": true
+    }
+  ],
+  "not_evaluated": [
+    {
+      "item": "Candidate for surgery or interventional treatment (needed for the 6-week pathway; no data field)",
+      "basis": "team_assumption"
+    },
+    {
+      "item": "Conservative treatment within the past 6 months (no treatment dates in the data)",
+      "basis": "team_assumption"
+    },
+    {
+      "item": "Pre-operative planning for a scheduled lumbar surgery (separate pathway; no data field)",
+      "basis": "team_assumption"
+    },
+    {
+      "item": "72149 and 72158 are treated like 72148; the policy text does not mention contrast",
+      "basis": "team_assumption"
+    }
+  ],
+  "warnings": [],
+  "decision": "DOES_NOT_MEET_CRITERIA",
+  "decision_reason": "Does not meet the policy criteria. Rule 1: 3 weeks of conservative treatment (policy needs 6 or more) and no red flag. Not checked (no data): pre-operative planning, a separate pathway in this policy.",
+  "routing": "human_review",
+  "admin": {
+    "billing_code": "72149",
+    "auth_duration": {
+      "value": "Set by the insurer; not defined in our policies",
+      "basis": "team_assumption"
+    },
+    "follow_up_plan": {
+      "value": "A reviewer examines the failed or unassessable criteria before anything is submitted.",
+      "basis": "team_assumption"
+    },
+    "documentation_chunk": "commercial_lumbar_mri::documentation_requirements"
+  },
+  "policy": {
+    "found": true,
+    "procedure_code": "72149",
+    "payer": "SampleCommercial",
+    "state": "CA",
+    "patient_region": "JE",
+    "jurisdiction": "national",
+    "policy_id": "commercial_lumbar_mri",
+    "synthetic": true,
+    "sections": [
+      {
+        "chunk_id": "commercial_lumbar_mri::medical_necessity_criteria",
+        "section": "Medical Necessity Criteria",
+        "text": "The plan considers lumbar spine MRI medically necessary when any one of the following applies: 1. Low back pain with or without radiculopathy that persists after at least 6 weeks of provider-directed conservative treatment within the past 6 months (physical therapy, chiropractic care, or prescribed medication), and the member is a candidate for surgery or interventional treatment. 2. A red flag condition is present: suspected cauda equina syndrome, progressive neurologic deficit, suspected infection, suspected malignancy, or suspected fracture. 3. Pre-operative planning for a scheduled lumbar spine surgery.",
+        "score": null
+      },
+      {
+        "chunk_id": "commercial_lumbar_mri::not_medically_necessary",
+        "section": "Not Medically Necessary",
+        "text": "The plan considers lumbar spine MRI not medically necessary for acute low back pain present for less than 6 weeks without red flag conditions, for screening in members without symptoms, or when the results would not change management. Repeat MRI within 12 months is not medically necessary unless symptoms or neurologic findings have changed.",
+        "score": null
+      },
+      {
+        "chunk_id": "commercial_lumbar_mri::precertification_requirements",
+        "section": "Precertification Requirements",
+        "text": "Precertification is required for outpatient lumbar spine MRI. The ordering provider must submit the request before the service is performed. Requests submitted after the service date are reviewed as retrospective requests and may be denied for lack of authorization. Imaging performed in the emergency department or during an inpatient stay does not require separate precertification.",
+        "score": null
+      },
+      {
+        "chunk_id": "commercial_lumbar_mri::documentation_requirements",
+        "section": "Documentation Requirements",
+        "text": "Submit clinical notes from the last 60 days documenting symptom onset and duration, physical and neurologic exam findings, type and dates of conservative treatment and the member's response, and any red flag findings.",
+        "score": null
+      }
+    ],
+    "message": "Main policy sections (direct lookup by chunk ID, no search score)."
+  }
+}
