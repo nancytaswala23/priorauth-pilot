@@ -24,7 +24,7 @@ Stores insurance coverage policies and rules.
 
 Columns:
 - policy_id: STRING - Unique policy identifier (PRIMARY KEY)
-- payer_name: STRING - Insurance company name (Medicare, Aetna, etc.)
+- payer_name: STRING - Insurance company name (Medicare, SampleCommercial)
 - procedure_code: STRING - HCPCS procedure code covered
 - coverage_text: STRING - Policy coverage language and requirements
 

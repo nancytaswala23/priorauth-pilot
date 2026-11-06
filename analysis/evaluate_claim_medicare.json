@@ -1,0 +1,113 @@
+{
+  "claim_id": "C10203",
+  "patient_id": "P1061",
+  "procedure_code": "72148",
+  "payer": "Medicare",
+  "state": "NY",
+  "inputs": {
+    "patient_age": 64,
+    "diagnosis_codes": [
+      "M51.16",
+      "M54.16"
+    ],
+    "conservative_treatment_weeks": 3,
+    "red_flag_present": false
+  },
+  "rules": [
+    {
+      "rule_id": "r1_conservative_or_red_flag",
+      "rule": "conservative_treatment_weeks >= 6 or red_flag_present",
+      "basis": "policy",
+      "result": "FAIL",
+      "via": null,
+      "observed": "3 weeks of conservative treatment; red flag: no",
+      "cites_chunk": [
+        "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity",
+        "medicare_lcd_lumbar_mri::red_flag_conditions"
+      ],
+      "citations_in_policy": true
+    },
+    {
+      "rule_id": "r2_radiculopathy_dx_or_red_flag",
+      "rule": "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present",
+      "basis": "policy_with_code_translation",
+      "result": "PASS",
+      "via": null,
+      "observed": "diagnosis history: M51.16, M54.16; red flag: no",
+      "cites_chunk": [
+        "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity",
+        "medicare_lcd_lumbar_mri::red_flag_conditions"
+      ],
+      "citations_in_policy": true
+    },
+    {
+      "rule_id": "r3_adult_age",
+      "rule": "patient_age >= 18",
+      "basis": "team_assumption",
+      "result": "PASS",
+      "via": null,
+      "observed": "age 64",
+      "cites_chunk": [],
+      "citations_in_policy": true
+    }
+  ],
+  "not_evaluated": [
+    {
+      "item": "Imaging expected to change treatment (policy requires it; no data field)",
+      "basis": "team_assumption"
+    }
+  ],
+  "warnings": [],
+  "decision": "DOES_NOT_MEET_CRITERIA",
+  "decision_reason": "Does not meet the policy criteria. Rule 1: 3 weeks of conservative treatment (policy needs 6 or more) and no red flag.",
+  "routing": "human_review",
+  "admin": {
+    "billing_code": "72148",
+    "auth_duration": {
+      "value": "Set by the insurer; not defined in our policies",
+      "basis": "team_assumption"
+    },
+    "follow_up_plan": {
+      "value": "A reviewer examines the failed or unassessable criteria before anything is submitted.",
+      "basis": "team_assumption"
+    },
+    "documentation_chunk": "medicare_lcd_lumbar_mri::documentation_requirements"
+  },
+  "policy": {
+    "found": true,
+    "procedure_code": "72148",
+    "payer": "Medicare",
+    "state": "NY",
+    "patient_region": "JK",
+    "jurisdiction": "JK",
+    "policy_id": "medicare_lcd_lumbar_mri",
+    "synthetic": true,
+    "sections": [
+      {
+        "chunk_id": "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity",
+        "section": "Coverage Indications, Limitations, and/or Medical Necessity",
+        "text": "MRI of the lumbar spine is considered reasonable and necessary when the patient has low back pain with radiculopathy (pain, numbness, or weakness radiating into the leg) that has persisted despite at least 6 weeks of documented conservative management, and the results of imaging are expected to change treatment, such as referral for surgery or epidural injection.",
+        "score": null
+      },
+      {
+        "chunk_id": "medicare_lcd_lumbar_mri::red_flag_conditions",
+        "section": "Red Flag Conditions",
+        "text": "MRI may be performed without completing 6 weeks of conservative management when any of the following is suspected: cauda equina syndrome (new bladder or bowel dysfunction, saddle numbness), progressive or severe neurologic deficit, spinal infection (fever, IV drug use, immunosuppression), malignancy (history of cancer, unexplained weight loss), or vertebral fracture after significant trauma.",
+        "score": null
+      },
+      {
+        "chunk_id": "medicare_lcd_lumbar_mri::limitations",
+        "section": "Limitations",
+        "text": "MRI is not considered reasonable and necessary for uncomplicated acute low back pain of less than 6 weeks duration without red flag conditions. Routine screening imaging is not covered. Repeat lumbar MRI within 12 months is not covered unless there is a documented change in symptoms, new neurologic findings, or planned surgical intervention.",
+        "score": null
+      },
+      {
+        "chunk_id": "medicare_lcd_lumbar_mri::documentation_requirements",
+        "section": "Documentation Requirements",
+        "text": "The medical record must include the treating practitioner's history and physical examination, the duration and type of symptoms, the neurologic examination findings, and a description of conservative management attempted (for example physical therapy, anti-inflammatory medication, activity modification) with start and end dates. When a red flag condition is the reason for imaging, the specific red flag must be documented.",
+        "score": null
+      }
+    ],
+    "message": "Main policy sections (direct lookup by chunk ID, no search score)."
+  }
+}

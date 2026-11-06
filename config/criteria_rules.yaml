@@ -17,12 +17,19 @@
 # there is no universal shared heading set, which is exactly why citing the
 # full chunk_id matters more than citing a bare section name.
 #
-# IMPORTANT: cites_chunk below is specific to Medicare's lumbar_mri LCD
-# (medicare_lcd_lumbar_mri). A SampleCommercial case must NOT use these
-# chunk ids -- it has entirely different section headings (see
-# config/chunking_strategy.yaml). This is a known gap, not yet solved:
-# these rules need a per-payer variant, or cites_chunk needs to be resolved
-# dynamically based on which policy was actually retrieved.
+# PER-PAYER RULES (updated Nov 6, after Yashasvi confirmed the policy text):
+# the two payers do NOT share identical logic, so each rule now says which
+# payers it applies to and cites chunks per payer:
+#   applies_to:                  [Medicare, SampleCommercial]  (payer scope)
+#   medicare_cites_chunk:        chunks in medicare_lcd_lumbar_mri
+#   samplecommercial_cites_chunk: chunks in commercial_lumbar_mri
+# Key names END with "cites_chunk" on purpose: `verify-citations` collects
+# every such key. (A nested dict would show as FAIL there.) At run time,
+# evaluate_claim() also checks that every cited chunk really appears in
+# retrieve_policy()'s output for that claim.
+#
+# The radiculopathy rule is Medicare-only: the commercial policy says "with or
+# without radiculopathy", so applying it would wrongly fail commercial claims.
 #
 # "severity" controls how a failed rule affects the decision step:
 #   critical -> blocks approval outright (routes to NEEDS_DOCS or DENIED)
@@ -31,14 +38,20 @@
 procedures:
   lumbar_mri:
     rules:
-      - rule: "conservative_treatment_weeks >= 6 or red_flag_present"
+      - id: "r1_conservative_or_red_flag"
+        applies_to: ["Medicare", "SampleCommercial"]
+        rule: "conservative_treatment_weeks >= 6 or red_flag_present"
         source:
           - "PA_CLAIMS"  # conservative_treatment_weeks: derived from claim_date here, minus treatment_start_date -- see computation note below
           - "DIM_DIAGNOSES"  # red_flag_present: derived from diagnosis_code here, per Nancy -- NOT a PA_CLAIMS fact
         basis: "policy"
-        cites_chunk:
+        medicare_cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base 6-week requirement
           - "medicare_lcd_lumbar_mri::red_flag_conditions"  # exception: skip the wait if a red flag is present
+        samplecommercial_cites_chunk:
+          # No separate red-flag section in the commercial policy: the red flag is
+          # item 2 INSIDE medical_necessity_criteria (confirmed by Yashasvi).
+          - "commercial_lumbar_mri::medical_necessity_criteria"
         cites_chunk_confirmed_by: >
           Base clause confirmed via Yashasvi's eval set (exact match).
           Exception clause confirmed by reading the real policy text directly
@@ -69,10 +82,12 @@ procedures:
         #     through, just not done for this field yet. Also hardcoded in test
         #     data for Saturday's demo.
 
-      - rule: "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present"
+      - id: "r2_radiculopathy_dx_or_red_flag"
+        applies_to: ["Medicare"]  # NOT commercial: its policy says "with or without radiculopathy"
+        rule: "any(code in diagnosis_codes for code in ['M54.16', 'M54.17', 'M51.16']) or red_flag_present"
         source: "DIM_DIAGNOSES"  # BOTH halves of this rule trace here: diagnosis_codes directly, AND red_flag_present (also derived from diagnosis_code, per Nancy) -- not PA_CLAIMS
         basis: "policy_with_code_translation"  # policy says "radiculopathy" in plain language; we translated that into 3 real ICD-10 codes -- verify-citations now shows this as NOTE, not WARN
-        cites_chunk:
+        medicare_cites_chunk:
           - "medicare_lcd_lumbar_mri::coverage_indications_limitations_and_or_medical_necessity"  # base radiculopathy requirement
           - "medicare_lcd_lumbar_mri::red_flag_conditions"  # exception: red flags don't require a confirmed diagnosis code yet
         cites_chunk_confirmed_by: >
@@ -110,7 +125,9 @@ procedures:
           which case imaging is justified without waiting on a confirmed
           diagnosis code
 
-      - rule: "patient_age >= 18"
+      - id: "r3_adult_age"
+        applies_to: ["Medicare", "SampleCommercial"]
+        rule: "patient_age >= 18"
         source: "DIM_PATIENTS"  # confirmed by Nancy: real dimension table name, not "PATIENTS"
         basis: "team_assumption"  # NOT derived from any real policy text -- see cites_chunk_confirmed_by
         cites_chunk: null
@@ -126,6 +143,21 @@ procedures:
           scope assumption, or remove entirely.
         severity: "high"
         description: "Patient must be 18 or older -- a team scope assumption for this demo, not a requirement from any real policy text"
+
+    # Which procedure codes these rules cover. 72149 / 72158 follow the same
+    # criteria as 72148 -- but the policy text says nothing about contrast, so
+    # that is a TEAM ASSUMPTION (evaluate_claim() labels it as one).
+    procedure_codes: ["72148", "72149", "72158"]
+    procedure_code_assumption: "72149 and 72158 are treated like 72148; the policy text does not mention contrast"
+
+    # Policy criteria we cannot check because the data has no such field.
+    # evaluate_claim() lists these in its output instead of silently ignoring them.
+    medicare_not_evaluated:
+      - "Imaging expected to change treatment (policy requires it; no data field)"
+    samplecommercial_not_evaluated:
+      - "Candidate for surgery or interventional treatment (needed for the 6-week pathway; no data field)"
+      - "Conservative treatment within the past 6 months (no treatment dates in the data)"
+      - "Pre-operative planning for a scheduled lumbar surgery (separate pathway; no data field)"
 
     decision_logic: "ALL_RULES_MUST_PASS"
     approval_threshold: 0.95
@@ -167,3 +199,18 @@ procedures:
 #    could route to human review instead. NOT YET IMPLEMENTED: this is a
 #    real behavior change to decision_logic, and shouldn't be made silently
 #    this close to presenting. Needs explicit team sign-off first.
+
+# =============================================================================
+# STATUS UPDATE (Nov 6) -- what changed since the open items above were written
+# =============================================================================
+# 1. conservative_treatment_weeks and red_flag_present now exist as columns in
+#    the demo DuckDB claims table. They are SYNTHETIC values (weeks are random
+#    2-12; red_flag_present is not derived from diagnosis_code). The red-flag
+#    ICD-10 code list is therefore still unverified and NOT used.
+# 2. diagnosis_codes aggregation is now done in evaluate_claim(): all of the
+#    patient's diagnosis codes on claims dated on or before this claim's
+#    date_of_service (later claims are not used).
+# 3. Per-payer rules + citations: done (see header). Items 3 and 4 above are
+#    still open: documentation-by-chunk-id is not wired in beyond returning the
+#    chunk id; a failed team_assumption-only rule now routes to human review
+#    (plan step 3) with decision NEEDS_DOCS -- confirm with the team.

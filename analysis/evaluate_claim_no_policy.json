@@ -1,0 +1,45 @@
+{
+  "claim_id": "TEST-NOPOLICY",
+  "patient_id": "PX",
+  "procedure_code": "72148",
+  "payer": "Medicare",
+  "state": "CA",
+  "inputs": {
+    "patient_age": 60,
+    "diagnosis_codes": [
+      "M54.16"
+    ],
+    "conservative_treatment_weeks": 8,
+    "red_flag_present": false
+  },
+  "rules": [],
+  "not_evaluated": [],
+  "warnings": [],
+  "decision": "NEEDS_DOCS",
+  "decision_reason": "Cannot assess this claim: No Medicare policy for procedure 72148 in region JE. Routed to a human. This does not mean the procedure has no requirements.",
+  "routing": "human_review",
+  "admin": {
+    "billing_code": "72148",
+    "auth_duration": {
+      "value": "Set by the insurer; not defined in our policies",
+      "basis": "team_assumption"
+    },
+    "follow_up_plan": {
+      "value": "A reviewer examines the failed or unassessable criteria before anything is submitted.",
+      "basis": "team_assumption"
+    },
+    "documentation_chunk": null
+  },
+  "policy": {
+    "found": false,
+    "procedure_code": "72148",
+    "payer": "Medicare",
+    "state": "CA",
+    "patient_region": "JE",
+    "jurisdiction": "JE",
+    "policy_id": null,
+    "synthetic": null,
+    "sections": [],
+    "message": "No Medicare policy for procedure 72148 in region JE. Route to human review."
+  }
+}

@@ -125,7 +125,7 @@ for r in rules:
     else:
         passed = None
     label = "SKIP (unresolved)" if passed is None else ("condition met" if passed else "condition NOT met")
-    print(f"    [{label:18}] {r['rule']}  (cites_chunk: {r.get('cites_chunk')})")
+    print(f"    [{label:18}] {r['rule']}  (cites: {r.get('medicare_cites_chunk') or r.get('cites_chunk')})")
     if r["severity"] == "critical" and passed is False:
         all_critical_passed = False
 

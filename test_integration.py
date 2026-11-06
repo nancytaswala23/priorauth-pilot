@@ -148,9 +148,9 @@ with open(REPO_ROOT / "config" / "criteria_rules.yaml") as f:
     rules_config = yaml.safe_load(f)
 rules = rules_config["procedures"]["lumbar_mri"]["rules"]
 
-rule1_cites = rules[0]["cites_chunk"]  # now a list -- this rule cites 2 sections (base + red-flag exception)
+rule1_cites = rules[0]["medicare_cites_chunk"]  # per-payer key since Nov 6; a list (base + red-flag exception)
 check(
-    f"Retrieved chunk_id is one of Rule 1's cites_chunk list {rule1_cites}",
+    f"Retrieved chunk_id is one of Rule 1's medicare_cites_chunk list {rule1_cites}",
     top["chunk_id"] in rule1_cites,
 )
 
