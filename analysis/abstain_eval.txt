@@ -1,0 +1,17 @@
+﻿Threshold: -8.739  (calibrated on the calibration set, not on these questions)
+
+Covered questions answered:        39/39 (100%)
+Not-covered questions abstained:   1/11 (9%)
+Overall correct answer/abstain:    40/50 (80%)
+
+Mistakes:
+  [should abstain, answered] score=-5.46  Do I need a referral from my primary care doctor to get an MRI?
+  [should abstain, answered] score=-6.57  What happens if my insurance says no to an MRI that my doctor thinks I need?
+  [should abstain, answered] score=-6.69  How long does approval usually take for a brain MRI?
+  [should abstain, answered] score=2.86  If the MRI request is denied, can we submit additional documentation for another review?
+  [should abstain, answered] score=-1.66  Where can we check whether the authorization for a sleep apnea test has been approved?
+  [should abstain, answered] score=-6.52  My dad has severe back pain and his doctor wants an MRI. How do we find out if his insurance will pay for it?
+  [should abstain, answered] score=-8.74  If my family member gets approved for a CPAP machine, will insurance also cover the mask and supplies?
+  [should abstain, answered] score=-5.6  My dad had a knee MRI last year. Would insurance cover another one if his pain returned?
+  [should abstain, answered] score=-2.75  Are there any restrictions on how frequently a patient can receive a brain MRI?
+  [should abstain, answered] score=-2.4  If a patient changes insurance plans, will the new plan require a new sleep study or authorization for CPAP equipment?

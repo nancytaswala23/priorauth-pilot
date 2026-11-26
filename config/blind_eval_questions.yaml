@@ -43,16 +43,17 @@ questions:
   - {question: "What are the coverage requirements for an at-home sleep apnea test compared with an in-lab sleep study?", procedure_code: "95810", payer: SampleCommercial, expected_chunk: "commercial_sleep_apnea::medical_necessity_criteria", perspective: reviewer}
   - {question: "Does coverage for a CPAP machine depend on the severity of the patient's sleep apnea?", procedure_code: "E0601", payer: SampleCommercial, expected_chunk: "commercial_sleep_apnea::medical_necessity_criteria", perspective: reviewer}
 
-# Not answered by any of our policies (not scored):
+# Not answered by any of our policies (not scored for retrieval).
+# Used to evaluate the "not covered by policy" answer: the system should abstain on these.
 not_covered:
-  - {question: "Do I need a referral from my primary care doctor to get an MRI?", reason: "Referral rules are not in any policy"}
-  - {question: "What happens if my insurance says no to an MRI that my doctor thinks I need?", reason: "Appeals process is not in any policy"}
-  - {question: "How long does approval usually take for a brain MRI?", reason: "Brain MRI policy has no review timeframe"}
-  - {question: "If the MRI request is denied, can we submit additional documentation for another review?", reason: "Appeals / reconsideration not in any policy"}
-  - {question: "Where can we check whether the authorization for a sleep apnea test has been approved?", reason: "Status lookup is an operational question, not policy content"}
-  - {question: "My dad has severe back pain and his doctor wants an MRI. How do we find out if his insurance will pay for it?", reason: "Process question (how to check coverage), not a coverage criterion"}
-  - {question: "If my family member gets approved for a CPAP machine, will insurance also cover the mask and supplies?", reason: "CPAP supplies not in the policy"}
-  - {question: "My dad had a knee MRI last year. Would insurance cover another one if his pain returned?", reason: "Knee MRI policy has no repeat-imaging rule"}
-  - {question: "What should we do if the insurance company denies coverage for a procedure the doctor recommends?", reason: "Appeals process is not in any policy"}
-  - {question: "Are there any restrictions on how frequently a patient can receive a brain MRI?", reason: "Brain MRI policy has no frequency rule"}
-  - {question: "If a patient changes insurance plans, will the new plan require a new sleep study or authorization for CPAP equipment?", reason: "Plan transitions not in any policy"}
+  - {question: "Do I need a referral from my primary care doctor to get an MRI?", procedure_code: "72148", payer: SampleCommercial, reason: "Referral rules are not in any policy"}
+  - {question: "What happens if my insurance says no to an MRI that my doctor thinks I need?", procedure_code: "72148", payer: SampleCommercial, reason: "Appeals process is not in any policy"}
+  - {question: "How long does approval usually take for a brain MRI?", procedure_code: "70553", payer: SampleCommercial, reason: "Brain MRI policy has no review timeframe"}
+  - {question: "If the MRI request is denied, can we submit additional documentation for another review?", procedure_code: "72148", payer: SampleCommercial, reason: "Appeals / reconsideration not in any policy"}
+  - {question: "Where can we check whether the authorization for a sleep apnea test has been approved?", procedure_code: "G0399", payer: SampleCommercial, reason: "Status lookup is an operational question, not policy content"}
+  - {question: "My dad has severe back pain and his doctor wants an MRI. How do we find out if his insurance will pay for it?", procedure_code: "72148", payer: SampleCommercial, reason: "Process question (how to check coverage), not a coverage criterion"}
+  - {question: "If my family member gets approved for a CPAP machine, will insurance also cover the mask and supplies?", procedure_code: "E0601", payer: SampleCommercial, reason: "CPAP supplies not in the policy"}
+  - {question: "My dad had a knee MRI last year. Would insurance cover another one if his pain returned?", procedure_code: "73721", payer: SampleCommercial, reason: "Knee MRI policy has no repeat-imaging rule"}
+  - {question: "What should we do if the insurance company denies coverage for a procedure the doctor recommends?", procedure_code: "72148", payer: SampleCommercial, reason: "Appeals process is not in any policy"}
+  - {question: "Are there any restrictions on how frequently a patient can receive a brain MRI?", procedure_code: "70553", payer: SampleCommercial, reason: "Brain MRI policy has no frequency rule"}
+  - {question: "If a patient changes insurance plans, will the new plan require a new sleep study or authorization for CPAP equipment?", procedure_code: "E0601", payer: SampleCommercial, reason: "Plan transitions not in any policy"}

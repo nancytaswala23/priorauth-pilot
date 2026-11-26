@@ -116,6 +116,16 @@ Findings:
 6. **Section names:** the earlier benefit does not hold on blind questions (embeddings 23 with vs 24 without), so we make no claim either way.
 
 Caveats: the answer key was written by one person and should be reviewed by a second; 39 questions is still a small sample.
+### "Not covered by policy" detection (first attempt)
+
+Approach: if the top reranker score falls below a threshold, report that the policy does not answer the question. The threshold was chosen on a calibration set only (22 covered + 10 not-covered questions written by the team), then evaluated once on the blind set.
+
+| | Result |
+|---|---|
+| Blind covered questions answered | 39/39 |
+| Blind not-covered questions flagged | 1/11 |
+
+Finding: reranker scores alone cannot reliably detect unanswerable questions. Scores for covered (−10.5 to 8.1) and not-covered (−11.3 to −0.6) questions overlap, because scores depend on wording as well as relevance. Some unanswerable questions (e.g. resubmitting after a denial) closely resemble real sections such as Documentation Requirements. Next: an LLM-based answerability check, calibrated the same way and evaluated on new blind questions.
 
 ## Citation check
 
