@@ -62,7 +62,13 @@ def render_policy_panel(policy: dict) -> None:
              ("Patient region", policy.get("patient_region") or "—")])
 
     st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-    st.markdown("#### Policy sections")
+    if policy.get("answers_question") is False:
+        card(f"{badge('Not covered by this policy', AMBER)}"
+             f"<p style='margin:12px 0 0 0'>{esc(policy.get('message', ''))}</p>",
+             title="Your question")
+        st.markdown("#### Closest sections (may not answer the question)")
+    else:
+        st.markdown("#### Policy sections")
     for i, s in enumerate(policy.get("sections", [])):
         label = f"{_icon(s['section'])}  {s['section']}"
         if s.get("score") is not None:

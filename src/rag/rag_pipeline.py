@@ -810,6 +810,97 @@ def cmd_check_data(args):
           f"{len(missing)} rule field(s) missing from the data")
 
 
+# ----------------------------------------------------------- not covered (abstain)
+ABSTAIN_CALIBRATION_PATH = REPO_ROOT / "config" / "abstain_calibration.yaml"
+ABSTAIN_CONFIG_PATH = REPO_ROOT / "config" / "abstain.yaml"
+
+
+def _top_score(retriever, question, payer, code):
+    hits = retriever.search(question, payer, str(code), k=1)
+    return hits[0]["score"] if hits else None
+
+
+def _abstain_retriever():
+    r = get_retriever(quiet=True, use_rerank="auto")
+    if not r.rerank:
+        sys.exit("ERROR: the not-covered threshold uses reranker scores; install the requirements first.")
+    return r
+
+
+def cmd_calibrate_abstain(args):
+    """Choose the abstain threshold on the CALIBRATION set only (never the blind set):
+    the 22 built-in covered questions + config/abstain_calibration.yaml (not covered)."""
+    r = _abstain_retriever()
+    with open(ABSTAIN_CALIBRATION_PATH, encoding="utf-8") as f:
+        uncovered_q = yaml.safe_load(f)["not_covered"]
+    covered = [(q, _top_score(r, q, payer, code)) for _, q, payer, code, _ in EVAL_SET]
+    uncovered = [(u["question"], _top_score(r, u["question"], u["payer"], u["procedure_code"])) for u in uncovered_q]
+
+    scores = sorted({s for _, s in covered + uncovered if s is not None})
+    candidates = [scores[0] - 1] + [(a + b) / 2 for a, b in zip(scores, scores[1:])] + [scores[-1] + 1]
+    best = None
+    for t in candidates:
+        answered = sum(1 for _, s in covered if s is not None and s >= t)
+        abstained = sum(1 for _, s in uncovered if s is None or s < t)
+        acc = (answered + abstained) / (len(covered) + len(uncovered))
+        # prefer higher accuracy, then the LOWER threshold (answer more often when tied)
+        if best is None or acc > best[1] + 1e-9:
+            best = (t, acc, answered, abstained)
+    t, acc, answered, abstained = best
+
+    print("Top reranker score per question (calibration set)")
+    print(f"  covered     (n={len(covered)}): min {min(s for _, s in covered):.2f}  max {max(s for _, s in covered):.2f}")
+    print(f"  not covered (n={len(uncovered)}): min {min(s for _, s in uncovered):.2f}  max {max(s for _, s in uncovered):.2f}")
+    print(f"\nChosen threshold: {t:.3f}")
+    print(f"  covered answered:      {answered}/{len(covered)}")
+    print(f"  not covered abstained: {abstained}/{len(uncovered)}")
+    print(f"  calibration accuracy:  {acc:.0%}")
+    with open(ABSTAIN_CONFIG_PATH, "w", encoding="utf-8") as f:
+        yaml.safe_dump({"threshold": round(float(t), 4), "model": RERANK_MODEL,
+                        "calibrated_on": "22 built-in questions + config/abstain_calibration.yaml",
+                        "note": "Below this top reranker score, the policy is treated as not answering the question."}, f)
+    print(f"\nSaved to {ABSTAIN_CONFIG_PATH}")
+
+
+def cmd_eval_abstain(args):
+    """Evaluate the saved threshold ONCE on the blind set: 39 covered + 11 not covered."""
+    if not ABSTAIN_CONFIG_PATH.exists():
+        sys.exit("ERROR: run calibrate-abstain first.")
+    with open(ABSTAIN_CONFIG_PATH, encoding="utf-8") as f:
+        t = yaml.safe_load(f)["threshold"]
+    with open(BLIND_EVAL_PATH, encoding="utf-8") as f:
+        blind = yaml.safe_load(f)
+    r = _abstain_retriever()
+
+    wrong = []
+    answered = 0
+    for q in blind.get("questions") or []:
+        s = _top_score(r, q["question"], q.get("payer"), q["procedure_code"])
+        if s is not None and s >= t:
+            answered += 1
+        else:
+            wrong.append(("should answer, abstained", q["question"], s))
+    abstained = 0
+    unc = [u for u in blind.get("not_covered") or [] if u.get("procedure_code")]
+    for u in unc:
+        s = _top_score(r, u["question"], u.get("payer"), u["procedure_code"])
+        if s is None or s < t:
+            abstained += 1
+        else:
+            wrong.append(("should abstain, answered", u["question"], s))
+
+    n_cov = len(blind.get("questions") or [])
+    print(f"Threshold: {t}  (calibrated on the calibration set, not on these questions)\n")
+    print(f"Covered questions answered:        {answered}/{n_cov} ({answered / n_cov:.0%})")
+    print(f"Not-covered questions abstained:   {abstained}/{len(unc)} ({abstained / max(len(unc), 1):.0%})")
+    total = n_cov + len(unc)
+    print(f"Overall correct answer/abstain:    {answered + abstained}/{total} ({(answered + abstained) / total:.0%})")
+    if wrong:
+        print("\nMistakes:")
+        for kind, q, s in wrong:
+            print(f"  [{kind}] score={s if s is None else round(s, 2)}  {q}")
+
+
 # -------------------------------------------------------------------- main
 
 def main():
@@ -853,12 +944,17 @@ def main():
     d.add_argument("--patients", default=str(PATIENTS_CSV))
     d.add_argument("--claims", default=str(CLAIMS_CSV))
 
+    sub.add_parser("calibrate-abstain", help="choose the 'not covered by policy' threshold on the calibration set")
+    sub.add_parser("eval-abstain", help="evaluate the 'not covered by policy' answer once on the blind set")
+
     args = parser.parse_args()
     {"build": cmd_build, "query": cmd_query, "demo": cmd_demo,
      "eval": cmd_eval, "compare": cmd_compare,
      "verify-citations": cmd_verify_citations,
      "export-metadata": cmd_export_metadata,
-     "check-data": cmd_check_data}[args.command](args)
+     "check-data": cmd_check_data,
+     "calibrate-abstain": cmd_calibrate_abstain,
+     "eval-abstain": cmd_eval_abstain}[args.command](args)
 
 
 if __name__ == "__main__":

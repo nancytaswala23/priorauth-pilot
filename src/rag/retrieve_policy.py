@@ -17,6 +17,8 @@ import json
 import sys
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # so the app can import this file
 from rag_pipeline import build_chunks, get_retriever, jurisdiction_for_state, load_config  # noqa: E402
 
@@ -30,6 +32,8 @@ MAIN_SECTIONS = [
     "precertification_requirements",
     "documentation_requirements",
 ]
+
+ABSTAIN_CONFIG = Path(__file__).resolve().parents[2] / "config" / "abstain.yaml"
 
 _retriever = None   # search models are loaded once and reused
 _chunks = None
@@ -64,6 +68,15 @@ def _find_policy(procedure_code, payer, jurisdiction):
     return matches[0] if matches else None
 
 
+def _abstain_threshold():
+    """Threshold chosen by `rag_pipeline.py calibrate-abstain`; None if not calibrated yet."""
+    try:
+        with open(ABSTAIN_CONFIG, encoding="utf-8") as f:
+            return float(yaml.safe_load(f)["threshold"])
+    except Exception:
+        return None
+
+
 def _section(chunk, score=None):
     return {"chunk_id": chunk["chunk_id"], "section": chunk["section"],
             "text": chunk["text"], "score": score}
@@ -77,7 +90,7 @@ def retrieve_policy(procedure_code, payer, state, question=None):
     result = {"found": False, "procedure_code": procedure_code, "payer": payer,
               "state": state, "patient_region": jurisdiction,
               "jurisdiction": jurisdiction, "policy_id": None,
-              "synthetic": None, "sections": [], "message": ""}
+              "synthetic": None, "sections": [], "answers_question": None, "message": ""}
 
     policy = _find_policy(procedure_code, payer, jurisdiction)
     if policy is None:
@@ -100,9 +113,17 @@ def retrieve_policy(procedure_code, payer, state, question=None):
 
     if question:
         # Full search: FAISS + reranker, filtered to this payer, code and region.
-        hits = warm_up().search(question, payer, procedure_code, jurisdiction, k=3)
+        retriever = warm_up()
+        hits = retriever.search(question, payer, procedure_code, jurisdiction, k=3)
         result["sections"] = [_section(h, h["score"]) for h in hits]
-        result["message"] = f"Top {len(hits)} sections for: {question}"
+        threshold = _abstain_threshold() if getattr(retriever, "rerank", False) else None
+        if threshold is not None and (not hits or hits[0]["score"] < threshold):
+            result["answers_question"] = False
+            result["message"] = ("This policy does not appear to answer that question. "
+                                 "The closest sections are shown below, but they may not apply.")
+        else:
+            result["answers_question"] = True if threshold is not None else None
+            result["message"] = f"Top {len(hits)} sections for: {question}"
     else:
         # No question: return the policy's main sections directly by chunk ID.
         own = {c["chunk_id"].split("::", 1)[1]: c for c in _all_chunks()

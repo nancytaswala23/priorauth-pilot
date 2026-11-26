@@ -1,0 +1,15 @@
+# Calibration questions for the "not covered by policy" answer.
+# Written by the pipeline author, used ONLY to choose the abstain threshold.
+# The blind test set (blind_eval_questions.yaml) is never used for tuning.
+# Covered calibration questions are the 22 built-in EVAL_SET questions in rag_pipeline.py.
+not_covered:
+  - {question: "What is the copay for this MRI?", procedure_code: "72148", payer: SampleCommercial}
+  - {question: "Which imaging centers are in network?", procedure_code: "72148", payer: SampleCommercial}
+  - {question: "How do I file an appeal if the request is denied?", procedure_code: "72148", payer: Medicare}
+  - {question: "Can the patient get a second opinion before surgery?", procedure_code: "27447", payer: SampleCommercial}
+  - {question: "What is the phone number for the prior authorization department?", procedure_code: "72141", payer: SampleCommercial}
+  - {question: "Does the plan cover physical therapy visits?", procedure_code: "73721", payer: SampleCommercial}
+  - {question: "How much does a knee replacement cost?", procedure_code: "27447", payer: SampleCommercial}
+  - {question: "Has the patient met their deductible?", procedure_code: "70553", payer: SampleCommercial}
+  - {question: "How long does it take to get sleep study results?", procedure_code: "95810", payer: SampleCommercial}
+  - {question: "What anesthesia is used for the injection?", procedure_code: "62323", payer: SampleCommercial}

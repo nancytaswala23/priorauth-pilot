@@ -1,0 +1,4 @@
+calibrated_on: 22 built-in questions + config/abstain_calibration.yaml
+model: cross-encoder/ms-marco-MiniLM-L-6-v2
+note: Below this top reranker score, the policy is treated as not answering the question.
+threshold: -8.739
