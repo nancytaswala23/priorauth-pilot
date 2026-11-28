@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 data/index/
 __pycache__/
+.env
