@@ -24,6 +24,7 @@ from src.rag.retrieve_policy import retrieve_policy  # noqa: E402
 from src.agent.evaluate_claim import evaluate_claim  # noqa: E402
 from app_panels.policy_panel import render_policy_panel, load_search_models  # noqa: E402
 from app_panels.report_pdf import build_assessment_pdf  # noqa: E402
+from src.rag.letter import DRAFT_FOR, letter_to_text, draft_letter  # noqa: E402
 from app_panels.ui import (AMBER, CORAL, GREY, NAVY, TEAL, badge, card, chip, esc,  # noqa: E402
                            inject_css, kpi_row, kv_card, pill, section_title, stepper)
 
@@ -210,6 +211,20 @@ def claim_facts(claim_id):
             "Age": rec["age"], "Gender": rec["gender"], "State": rec["state"], "Payer": rec["insurance"]}
 
 
+CHECK_LABELS = {
+    "billing_code_present": "Billing code", "place_of_service_present": "Place of service",
+    "auth_duration_present": "Authorization duration", "follow_up_present": "Follow-up plan",
+    "citations_valid": "Citations valid", "no_invented_numbers": "No invented numbers",
+    "no_decision_language": "No approve/deny wording", "assumptions_labeled": "Assumptions labeled",
+    "policy_sections_cited": "Policy sections cited", "documentation_complete": "Documentation complete",
+}
+
+
+def letter_key(ev):
+    """One drafted letter per claim + decision, so a re-run assessment gets a fresh letter."""
+    return f"letter::{ev.get('claim_id')}::{ev.get('decision')}"
+
+
 def current_evaluation():
     ev = st.session_state.evaluation_data
     return ev if ev and ev.get("claim_id") == st.session_state.claim_id else None
@@ -394,8 +409,39 @@ with tab4:
             card(f"<p style='margin:0'>{esc(policy.get('message') or 'No policy found. Route to human review.')}</p>",
                  title="Policy used")
 
+        # Draft letter (only for MEETS_CRITERIA / NEEDS_DOCS, per the Day 1 decision)
+        st.markdown("#### Draft letter")
+        key = letter_key(ev)
+        letter = st.session_state.get(key)
+        if ev.get("decision") not in DRAFT_FOR:
+            card("<p style='margin:0'>No letter is drafted when the request does not meet the policy criteria. "
+                 "It goes to staff review first.</p>", title="Draft letter")
+        else:
+            if st.button("✍️  Draft letter", key="draft_letter_btn"):
+                with st.spinner("Drafting the letter and running the checks..."):
+                    st.session_state[key] = draft_letter(ev, claim=claim_record(ev["claim_id"]))
+                letter = st.session_state[key]
+            if letter:
+                checks = letter.get("checks", {})
+                passed = sum(1 for k in CHECK_LABELS if checks.get(k))
+                source = letter.get("source", "template")
+                card(f"{badge(f'{passed}/{len(CHECK_LABELS)} checks passed', TEAL if checks.get('all_passed') else AMBER)}"
+                     f"&nbsp;&nbsp;{chip('Written by: ' + source)}"
+                     + (f"<p class='pa-muted' style='margin:10px 0 0 0'>{esc(letter['note'])}</p>" if letter.get("note") else ""),
+                     title="Letter checks")
+                cols = st.columns(5)
+                for i, (k, label) in enumerate(CHECK_LABELS.items()):
+                    cols[i % 5].markdown(f"{'✅' if checks.get(k) else '❌'} {label}")
+                with st.expander("Read the letter", expanded=True):
+                    st.text(letter_to_text(letter))
+                st.download_button("Download letter (.txt)", data=letter_to_text(letter),
+                                   file_name=f"PriorAuth_Letter_{ev.get('claim_id')}.txt", mime="text/plain")
+            else:
+                st.caption("Click **Draft letter** to write the request letter and run the 10 checks.")
+
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
         try:
-            pdf_bytes = build_assessment_pdf(ev, facts)
+            pdf_bytes = build_assessment_pdf(ev, facts, letter=letter)
             st.download_button("📄  Download report (PDF)", data=pdf_bytes,
                                file_name=f"PriorAuth_Assessment_{ev.get('claim_id')}.pdf",
                                mime="application/pdf", type="primary")

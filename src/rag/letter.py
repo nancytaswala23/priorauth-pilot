@@ -9,7 +9,7 @@ cited policy sections, automated checks on every letter.
     checks = check_letter(letter, assessment, claim=claim_record)
 
 LLM is optional (default: none -> template letter). Set LLM_PROVIDER to one of:
-    groq     needs GROQ_API_KEY    (model: GROQ_MODEL,   default llama-3.3-70b-versatile)
+    groq     needs GROQ_API_KEY    (model: GROQ_MODEL,   default openai/gpt-oss-120b)
     gemini   needs GEMINI_API_KEY  (model: GEMINI_MODEL, default gemini-2.0-flash)
     ollama   local, no key         (model: OLLAMA_MODEL, default llama3.1:8b)
 Keys can also be put in a .env file in the repo root (never commit it).

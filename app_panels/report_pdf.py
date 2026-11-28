@@ -14,10 +14,10 @@ from io import BytesIO
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter as PAGE_SIZE
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 TEAL = colors.HexColor("#0E9F8E")
 NAVY = colors.HexColor("#0B3C49")
@@ -87,12 +87,13 @@ def _footer(canvas, doc):
     lines = textwrap.wrap(DISCLAIMER, 115)
     for i, line in enumerate(lines[:2]):
         canvas.drawString(doc.leftMargin, (0.5 - 0.13 * i) * inch, line)
-    canvas.drawRightString(letter[0] - doc.rightMargin, 0.37 * inch, f"Page {doc.page}")
+    canvas.drawRightString(PAGE_SIZE[0] - doc.rightMargin, 0.37 * inch, f"Page {doc.page}")
     canvas.restoreState()
 
 
-def build_assessment_pdf(evaluation, facts=None):
-    """Return the PDF report as bytes. `facts` is the optional dict from claim_facts() in app.py."""
+def build_assessment_pdf(evaluation, facts=None, letter=None):
+    """Return the PDF report as bytes. `facts` is the optional dict from claim_facts() in app.py.
+    `letter` is the optional output of letter.draft_letter(); it is added as the last page."""
     ev = evaluation or {}
     facts = facts or {}
     policy = ev.get("policy") or {}
@@ -122,7 +123,7 @@ def build_assessment_pdf(evaluation, facts=None):
         return t
 
     story = []
-    width = letter[0] - 1.5 * inch
+    width = PAGE_SIZE[0] - 1.5 * inch
 
     # Header
     story += [Paragraph("PriorAuthPilot", brand),
@@ -201,8 +202,25 @@ def build_assessment_pdf(evaluation, facts=None):
     else:
         story.append(Paragraph(_clean(policy.get("message") or "No policy found. Route to human review."), body))
 
+    # Draft letter (optional, last page)
+    if letter:
+        titles = {"header": "Header", "request": "Request", "clinical_summary": "Clinical summary",
+                  "medical_necessity": "Medical necessity", "documentation_enclosed": "Documentation enclosed",
+                  "follow_up_plan": "Follow-up plan", "signature": "Signature"}
+        checks = letter.get("checks", {})
+        check_keys = [k for k in checks if k not in ("all_passed", "invented_numbers")]
+        passed = sum(1 for k in check_keys if checks.get(k))
+        story += [PageBreak(), Paragraph("Draft prior authorization letter", h1),
+                  Paragraph(_clean(f"Written by: {letter.get('source', 'template')} - "
+                                   f"{passed}/{len(check_keys)} automated checks passed"), small)]
+        if letter.get("note"):
+            story.append(Paragraph(_clean(letter["note"]), small))
+        for k, title in titles.items():
+            text = letter.get("sections", {}).get(k, "")
+            story += [Paragraph(title, h2), Paragraph(_clean(text).replace("\n", "<br/>"), body)]
+
     buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=0.75 * inch, rightMargin=0.75 * inch,
+    doc = SimpleDocTemplate(buf, pagesize=PAGE_SIZE, leftMargin=0.75 * inch, rightMargin=0.75 * inch,
                             topMargin=0.7 * inch, bottomMargin=0.85 * inch,
                             title=f"Assessment report {ev.get('claim_id', '')}", author="PriorAuthPilot")
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
